@@ -13,6 +13,13 @@
       "id": "c849ae9cc66b4598b787b4bb859f594d"
     }
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "releasestoday-db",
+      "database_id": "a03575e5-179c-42c9-b8d1-8aa48f59f61f"
+    }
+  ],
   "observability": {
     "enabled": true
   }
