@@ -2,7 +2,76 @@
 export const prerender = true;
 
 import Layout from '../../components/Layout.astro';
-import games from '../../data/games.json';
+
+type DelayEvent = {
+  date: string;
+  type: string;
+  reason?: string;
+};
+
+type Specs = {
+  cpu: string;
+  ram: string;
+  gpu: string;
+};
+
+type Game = {
+  title: string;
+  slug: string;
+  release_date: string;
+  platforms: string[];
+  status: 'Locked' | 'Delayed';
+  delay_history: DelayEvent[];
+  specs_min: Specs;
+  specs_rec: Specs;
+};
+
+const games: Game[] = [
+  {
+    title: 'Grand Theft Auto VI',
+    slug: 'grand-theft-auto-vi',
+    release_date: '2026-11-20',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'Delayed',
+    delay_history: [
+      { date: '2023-12', type: 'First Announcement' },
+      { date: '2025-05', type: 'Window Confirmed', reason: 'Fall 2025 target' },
+      { date: '2026-05', type: 'Delayed', reason: 'Polishing' },
+      { date: '2026-11-20', type: 'Locked Window' },
+    ],
+    specs_min: {
+      cpu: 'Intel Core i7-10700K / AMD Ryzen 7 3700X',
+      ram: '16 GB',
+      gpu: 'NVIDIA GeForce RTX 3060 / AMD Radeon RX 6600 XT',
+    },
+    specs_rec: {
+      cpu: 'Intel Core i7-12700K / AMD Ryzen 7 5800X3D',
+      ram: '32 GB',
+      gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
+    },
+  },
+  {
+    title: 'Eclipse Protocol',
+    slug: 'eclipse-protocol',
+    release_date: '2026-09-18',
+    platforms: ['PC', 'PS5', 'Xbox Series X'],
+    status: 'Locked',
+    delay_history: [
+      { date: '2025-03', type: 'First Announcement' },
+      { date: '2026-01', type: 'Date Locked', reason: 'Production complete' },
+    ],
+    specs_min: {
+      cpu: 'Intel Core i5-10400 / AMD Ryzen 5 3600',
+      ram: '16 GB',
+      gpu: 'NVIDIA GeForce GTX 1660 Super / AMD Radeon RX 5600 XT',
+    },
+    specs_rec: {
+      cpu: 'Intel Core i7-12700 / AMD Ryzen 7 5700X',
+      ram: '16 GB',
+      gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
+    },
+  },
+];
 
 export function getStaticPaths() {
   return games.map((game) => ({
@@ -11,12 +80,252 @@ export function getStaticPaths() {
   }));
 }
 
+interface Props {
+  game: Game;
+}
+
 const { game } = Astro.props;
+const statusClass =
+  game.status === 'Locked'
+    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+    : 'border-amber-400/40 bg-amber-400/10 text-amber-300';
+
+const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString('en-US', {
+  year: 'numeric',
+  month: 'long',
+  day: 'numeric',
+  timeZone: 'UTC',
+});
+
+const pageTitle = `${game.title} Release Date & Countdown`;
+const pageDescription = `${game.title} release date, countdown, delay history, and PC system requirements.`;
 ---
 
-<Layout title={game.title}>
-  <article>
-    <h1>{game.title}</h1>
-    <time datetime={game.releaseDate}>{game.releaseDate}</time>
+<Layout title={pageTitle} description={pageDescription}>
+  <article class="space-y-12" data-game-page data-slug={game.slug} data-rec-gpu={game.specs_rec.gpu}>
+    <header class="space-y-6 border-b border-cyan-500/20 pb-10">
+      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">
+        Release tracker
+      </p>
+      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
+        {game.title} Release Date & Countdown
+      </h1>
+      <div class="flex flex-wrap items-end gap-4">
+        <time
+          class="text-4xl font-black tabular-nums text-cyan-300 sm:text-5xl"
+          datetime={game.release_date}
+        >
+          {dateLabel}
+        </time>
+        <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>
+          {game.status}
+        </span>
+      </div>
+      <p id="countdown" class="font-mono text-sm text-neutral-400">Calculating countdown…</p>
+      <ul class="flex flex-wrap gap-2">
+        {
+          game.platforms.map((platform) => (
+            <li class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-200">
+              {platform}
+            </li>
+          ))
+        }
+      </ul>
+    </header>
+
+    <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/80 p-6 shadow-[0_0_40px_rgba(34,211,238,0.08)]">
+      <h2 class="text-xl font-bold text-white">Notify me when this game launches or gets delayed</h2>
+      <p class="mt-2 text-sm text-neutral-400">
+        One email when the date moves or the game goes live. No digest list.
+      </p>
+      <form id="subscribe-form" class="mt-5 flex flex-col gap-3 sm:flex-row" data-game-id={game.slug}>
+        <label class="sr-only" for="email">Email</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          required
+          autocomplete="email"
+          placeholder="you@email.com"
+          class="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white outline-none ring-cyan-400/40 placeholder:text-neutral-500 focus:border-cyan-400 focus:ring-2"
+        />
+        <button
+          type="submit"
+          class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950 transition hover:bg-cyan-300"
+        >
+          Notify Me
+        </button>
+      </form>
+      <p id="subscribe-status" class="mt-3 hidden text-sm" role="status"></p>
+      <p class="mt-3 text-[12px] leading-5 text-neutral-500">
+        Get an email notice for delays or launch. Unsubscribe anytime in accordance with our Privacy Policy.
+      </p>
+    </section>
+
+    {
+      game.delay_history.length > 0 && (
+        <section class="space-y-6">
+          <h2 class="text-2xl font-bold text-white">Release Date & Delay History</h2>
+          <ol class="relative ml-3 space-y-6 border-l border-dashed border-cyan-400/40 pl-8">
+            {game.delay_history.map((event) => (
+              <li class="relative">
+                <span class="absolute -left-[2.4rem] top-1.5 h-3 w-3 rounded-full border-2 border-neutral-950 bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
+                <p class="font-mono text-xs uppercase tracking-widest text-cyan-300">{event.date}</p>
+                <p class="mt-1 text-base font-semibold text-white">{event.type}</p>
+                {event.reason && <p class="mt-1 text-sm text-neutral-400">{event.reason}</p>}
+              </li>
+            ))}
+          </ol>
+        </section>
+      )
+    }
+
+    <section class="space-y-6">
+      <h2 class="text-2xl font-bold text-white">
+        Can My PC Run {game.title}? System Requirements
+      </h2>
+      <div class="grid gap-4 md:grid-cols-2">
+        <article class="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-5">
+          <h3 class="text-sm font-semibold uppercase tracking-widest text-neutral-400">Minimum</h3>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div>
+              <dt class="text-neutral-500">CPU</dt>
+              <dd class="text-neutral-100">{game.specs_min.cpu}</dd>
+            </div>
+            <div>
+              <dt class="text-neutral-500">RAM</dt>
+              <dd class="text-neutral-100">{game.specs_min.ram}</dd>
+            </div>
+            <div>
+              <dt class="text-neutral-500">GPU</dt>
+              <dd class="text-neutral-100">{game.specs_min.gpu}</dd>
+            </div>
+          </dl>
+        </article>
+        <article class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
+          <h3 class="text-sm font-semibold uppercase tracking-widest text-cyan-300">Recommended</h3>
+          <dl class="mt-4 space-y-3 text-sm">
+            <div>
+              <dt class="text-neutral-500">CPU</dt>
+              <dd class="text-neutral-100">{game.specs_rec.cpu}</dd>
+            </div>
+            <div>
+              <dt class="text-neutral-500">RAM</dt>
+              <dd class="text-neutral-100">{game.specs_rec.ram}</dd>
+            </div>
+            <div>
+              <dt class="text-neutral-500">GPU</dt>
+              <dd class="text-neutral-100">{game.specs_rec.gpu}</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+      <p id="gpu-status" class="text-sm text-neutral-400">Checking local GPU…</p>
+      <aside
+        id="amazon-banner"
+        hidden
+        class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5"
+      >
+        <p class="font-semibold text-amber-200">Your GPU might struggle. Check upgraded GPUs on Amazon.</p>
+        <a
+          id="amazon-link"
+          href="https://www.amazon.com/s?k=graphics+card"
+          rel="nofollow sponsored noopener noreferrer"
+          target="_blank"
+          class="mt-3 inline-block text-sm font-semibold text-amber-100 underline decoration-amber-400/50 underline-offset-4"
+        >
+          Browse current GPU listings
+        </a>
+      </aside>
+    </section>
   </article>
+
+  <script is:inline>
+    (function () {
+      const page = document.querySelector('[data-game-page]');
+      if (!page) return;
+
+      const slug = page.getAttribute('data-slug') || '';
+      const recGpu = page.getAttribute('data-rec-gpu') || '';
+      const countdownEl = document.getElementById('countdown');
+      const form = document.getElementById('subscribe-form');
+      const statusEl = document.getElementById('subscribe-status');
+      const gpuStatus = document.getElementById('gpu-status');
+      const banner = document.getElementById('amazon-banner');
+
+      const releaseAttr = document.querySelector('time[datetime]')?.getAttribute('datetime');
+      if (countdownEl && releaseAttr) {
+        const target = Date.parse(releaseAttr + 'T00:00:00Z');
+        const tick = () => {
+          const diff = target - Date.now();
+          if (diff <= 0) {
+            countdownEl.textContent = 'Release window reached.';
+            return;
+          }
+          const days = Math.floor(diff / 86400000);
+          countdownEl.textContent = days + ' days until the listed release date (UTC).';
+        };
+        tick();
+      }
+
+      if (form && statusEl) {
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          const emailInput = form.querySelector('#email');
+          const email = emailInput && 'value' in emailInput ? String(emailInput.value).trim() : '';
+          statusEl.classList.remove('hidden', 'text-emerald-400', 'text-rose-400');
+          statusEl.textContent = 'Sending…';
+          try {
+            const res = await fetch('/api/subscribe', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, game_id: slug }),
+            });
+            const data = await res.json().catch(() => ({}));
+            const passed = res.ok && (data.ok === true || data.success === true);
+            if (passed) {
+              statusEl.classList.add('text-emerald-400');
+              statusEl.textContent = 'You are on the list. Watch for delay or launch mail.';
+              form.reset();
+            } else {
+              statusEl.classList.add('text-rose-400');
+              statusEl.textContent = data.error || 'Could not save this subscription.';
+            }
+          } catch {
+            statusEl.classList.add('text-rose-400');
+            statusEl.textContent = 'Network error. Try again.';
+          }
+        });
+      }
+
+      const weakTokens = ['gtx', '1060', '1650', '1660', '1050', '2060', 'mx', 'uhd', 'iris', 'vega 8', '620'];
+      const detectGpu = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (!gl) return '';
+          const ext = gl.getExtension('WEBGL_debug_renderer_info');
+          if (!ext) return '';
+          return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
+        } catch {
+          return '';
+        }
+      };
+
+      const gpu = detectGpu();
+      const ua = navigator.userAgent || '';
+      const haystack = (gpu + ' ' + ua).toLowerCase();
+      if (gpuStatus) {
+        gpuStatus.textContent = gpu
+          ? 'Detected GPU: ' + gpu
+          : 'GPU could not be detected. Compare your card with the recommended GPU above.';
+      }
+      const weak = weakTokens.some((token) => haystack.includes(token));
+      const mentionsOld = /gtx|1060|1650|1660|2060/.test(haystack);
+      if (banner && (weak || mentionsOld) && recGpu) {
+        banner.hidden = false;
+      }
+    })();
+  </script>
+</article>
 </Layout>
