@@ -1,0 +1,35 @@
+---
+export const prerender = true;
+
+import Layout from '../components/Layout.astro';
+import games from '../data/games.json';
+---
+
+<Layout title="Releases Today" description="Upcoming game releases calendar.">
+  <section class="space-y-6">
+    <h1 class="text-3xl font-bold tracking-tight">Releases Today</h1>
+    <p class="text-neutral-400">
+      Track upcoming game launches. Static pages are prerendered; only subscribe runs on the edge.
+    </p>
+    <p>
+      <a href="/upcoming-games-2026" class="text-sky-400 hover:text-sky-300">
+        Open the 2026 calendar →
+      </a>
+    </p>
+
+    <ul class="grid gap-4">
+      {
+        games.map((game) => (
+          <li class="rounded-lg border border-neutral-800 p-4">
+            <a href={`/games/${game.slug}`} class="text-lg font-medium hover:text-white">
+              {game.title}
+            </a>
+            <p class="mt-1 text-sm text-neutral-500">
+              {game.releaseDate} · {game.platforms.join(' / ')}
+            </p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+</Layout>
