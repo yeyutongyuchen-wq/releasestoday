@@ -1,9 +1,7 @@
-// @ts-check
-import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import tailwindcss from '@tailwindcss/vite';
 
-export default defineConfig({
+export default {
   site: 'https://releasestoday.pages.dev',
   output: 'static',
   session: false,
@@ -16,4 +14,4 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-});
+};
