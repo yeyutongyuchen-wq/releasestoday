@@ -2,32 +2,249 @@
 export const prerender = true;
 
 import Layout from '../components/Layout.astro';
-import games from '../data/games.json';
 
-const sorted = [...games].sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+type Status = 'Confirmed' | 'TBA' | 'Rumored' | 'Locked' | 'Delayed';
+
+type HubGame = {
+  title: string;
+  slug?: string;
+  release_date: string;
+  platforms: string[];
+  status: Status;
+};
+
+const games: HubGame[] = [
+  {
+    title: 'Eclipse Protocol',
+    slug: 'eclipse-protocol',
+    release_date: '2026-09-18',
+    platforms: ['PC', 'PS5', 'Xbox Series X'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Grand Theft Auto VI',
+    slug: 'grand-theft-auto-vi',
+    release_date: '2026-11-20',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Prismatic Tactics',
+    release_date: '2026-02-13',
+    platforms: ['PC', 'Switch'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Red Harbor',
+    release_date: '2026-03-27',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'TBA',
+  },
+  {
+    title: 'Lumen Drive',
+    release_date: '2026-05-22',
+    platforms: ['PC'],
+    status: 'Rumored',
+  },
+  {
+    title: 'Ashveil Online',
+    release_date: '2026-07-10',
+    platforms: ['PC', 'PS5'],
+    status: 'TBA',
+  },
+  {
+    title: 'Night Circuit',
+    release_date: '2026-09-11',
+    platforms: ['PC', 'PS5'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Iron Harbor',
+    release_date: '2026-09-11',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Winter Protocol',
+    release_date: '2026-12-04',
+    platforms: ['PC', 'PS5', 'Xbox Series X'],
+    status: 'Rumored',
+  },
+];
+
+const quarters = [
+  { id: 'q1', label: 'Q1 2026', months: [1, 2, 3] },
+  { id: 'q2', label: 'Q2 2026', months: [4, 5, 6] },
+  { id: 'q3', label: 'Q3 2026', months: [7, 8, 9] },
+  { id: 'q4', label: 'Q4 2026', months: [10, 11, 12] },
+];
+
+const monthName = (month: number) =>
+  new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', {
+    month: 'long',
+    timeZone: 'UTC',
+  });
+
+const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+const statusClass = (status: Status) => {
+  if (status === 'Confirmed' || status === 'Locked') {
+    return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300';
+  }
+  if (status === 'Delayed' || status === 'TBA') {
+    return 'border-amber-400/40 bg-amber-400/10 text-amber-300';
+  }
+  return 'border-neutral-600 bg-neutral-800 text-neutral-300';
+};
 ---
 
 <Layout
-  title="Upcoming Games 2026"
-  description="2026 game release calendar."
+  title="Upcoming Games 2026: Video Game Release Calendar"
+  description="2026 video game release calendar for PC, PS5, and Xbox, including GTA VI and Eclipse Protocol."
 >
-  <section class="space-y-6">
-    <h1 class="text-3xl font-bold tracking-tight">Upcoming Games 2026</h1>
-    <p class="text-neutral-400">Release calendar hub. Dates come from local mock data.</p>
+  <section class="space-y-8">
+    <header class="space-y-4 border-b border-cyan-500/20 pb-8">
+      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">2026 Hub</p>
+      <h1 class="text-3xl font-black tracking-tight text-white sm:text-5xl">
+        Upcoming Games 2026: Video Game Release Calendar
+      </h1>
+      <p class="max-w-3xl text-sm text-neutral-400">
+        Structured 2026 slate with internal links to tracked entity pages. Dates are editorial windows, not publisher legal commitments.
+      </p>
+      <div class="flex flex-wrap gap-2">
+        <a href="#pc-2026" class="rounded-full border border-cyan-400/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
+          PC Games 2026
+        </a>
+        <a href="#ps5-2026" class="rounded-full border border-fuchsia-400/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-200">
+          PS5 Games 2026
+        </a>
+        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
+          Q1
+        </a>
+        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
+          Q2
+        </a>
+        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
+          Q3
+        </a>
+        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
+          Q4
+        </a>
+      </div>
+    </header>
 
-    <ol class="space-y-3">
-      {
-        sorted.map((game) => (
-          <li class="flex items-baseline justify-between gap-4 border-b border-neutral-800 py-3">
-            <a href={`/games/${game.slug}`} class="font-medium hover:text-white">
-              {game.title}
-            </a>
-            <time class="shrink-0 text-sm text-neutral-500" datetime={game.releaseDate}>
-              {game.releaseDate}
-            </time>
-          </li>
-        ))
-      }
-    </ol>
+    {
+      quarters.map((quarter) => (
+        <section id={quarter.id} class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">{quarter.label}</h2>
+          <div class="overflow-x-auto rounded-2xl border border-neutral-800">
+            <table class="min-w-full text-left text-sm">
+              <thead class="bg-neutral-900 text-xs uppercase tracking-widest text-neutral-500">
+                <tr>
+                  <th class="px-4 py-3">Title</th>
+                  <th class="px-4 py-3">Date</th>
+                  <th class="px-4 py-3">Platforms</th>
+                  <th class="px-4 py-3">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {quarter.months.flatMap((month) => {
+                  const rows = games
+                    .filter((game) => Number(game.release_date.slice(5, 7)) === month)
+                    .sort((a, b) => a.release_date.localeCompare(b.release_date));
+                  if (rows.length === 0) {
+                    return [
+                      <tr class="border-t border-neutral-800">
+                        <td class="px-4 py-3 text-neutral-500" colspan="4">
+                          {monthName(month)} — no tracked AAA window yet
+                        </td>
+                      </tr>,
+                    ];
+                  }
+                  return rows.map((game) => (
+                    <tr class="border-t border-neutral-800">
+                      <td class="px-4 py-3 font-medium">
+                        {game.slug ? (
+                          <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
+                            {game.title}
+                          </a>
+                        ) : (
+                          <span class="text-white">{game.title}</span>
+                        )}
+                      </td>
+                      <td class="px-4 py-3 text-neutral-300">
+                        <time datetime={game.release_date}>{formatDate(game.release_date)}</time>
+                      </td>
+                      <td class="px-4 py-3">
+                        <div class="flex flex-wrap gap-1">
+                          {game.platforms.map((platform) => (
+                            <span class="rounded-full border border-fuchsia-400/20 px-2 py-0.5 text-[11px] uppercase text-fuchsia-200">
+                              {platform}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span class:list={['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClass(game.status)]}>
+                          {game.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ));
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))
+    }
+
+    <section id="pc-2026" class="space-y-3">
+      <h2 class="text-xl font-bold text-white">PC Games 2026</h2>
+      <ul class="space-y-2 text-sm">
+        {
+          games
+            .filter((game) => game.platforms.includes('PC'))
+            .map((game) => (
+              <li>
+                {game.slug ? (
+                  <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
+                    {game.title}
+                  </a>
+                ) : (
+                  game.title
+                )}
+              </li>
+            ))
+        }
+      </ul>
+    </section>
+
+    <section id="ps5-2026" class="space-y-3">
+      <h2 class="text-xl font-bold text-white">PS5 Games 2026</h2>
+      <ul class="space-y-2 text-sm">
+        {
+          games
+            .filter((game) => game.platforms.includes('PS5'))
+            .map((game) => (
+              <li>
+                {game.slug ? (
+                  <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
+                    {game.title}
+                  </a>
+                ) : (
+                  game.title
+                )}
+              </li>
+            ))
+        }
+      </ul>
+    </section>
   </section>
 </Layout>
