@@ -79,6 +79,13 @@ const quarters = [
   { id: 'q4', label: 'Q4 2026', months: [10, 11, 12] },
 ];
 
+const platformFilters = [
+  { href: '/pc-games-2026/', label: 'PC Games 2026' },
+  { href: '/ps5-games-2026/', label: 'PS5 Games 2026' },
+  { href: '/xbox-games-2026/', label: 'Xbox Games 2026' },
+  { href: '/switch-2-games-2026/', label: 'Switch 2 Games 2026' },
+];
+
 const monthName = (month: number) =>
   new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', {
     month: 'long',
@@ -106,7 +113,7 @@ const statusClass = (status: Status) => {
 
 <Layout
   title="Upcoming Games 2026: Video Game Release Calendar"
-  description="2026 video game release calendar for PC, PS5, and Xbox, including GTA VI and Eclipse Protocol."
+  description="2026 video game release calendar for PC, PS5, Xbox, and Switch 2, including GTA VI and Eclipse Protocol."
 >
   <section class="space-y-8">
     <header class="space-y-4 border-b border-cyan-500/20 pb-8">
@@ -115,29 +122,33 @@ const statusClass = (status: Status) => {
         Upcoming Games 2026: Video Game Release Calendar
       </h1>
       <p class="max-w-3xl text-sm text-neutral-400">
-        Structured 2026 slate with internal links to tracked entity pages. Dates are editorial windows, not publisher legal commitments.
+        Quarterly 2026 slate. Tracked titles link to entity pages. Dates are editorial windows, not publisher legal commitments.
       </p>
-      <div class="flex flex-wrap gap-2">
-        <a href="#pc-2026" class="rounded-full border border-cyan-400/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-cyan-200">
-          PC Games 2026
-        </a>
-        <a href="#ps5-2026" class="rounded-full border border-fuchsia-400/30 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-200">
-          PS5 Games 2026
-        </a>
-        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
-          Q1
-        </a>
-        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
-          Q2
-        </a>
-        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
-          Q3
-        </a>
-        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-neutral-300">
-          Q4
-        </a>
-      </div>
     </header>
+
+    <nav aria-label="Platform filters" class="space-y-3">
+      <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400">Platform Filters</h2>
+      <ul class="flex flex-wrap gap-2">
+        {
+          platformFilters.map((filter) => (
+            <li>
+              <a
+                href={filter.href}
+                class="inline-flex rounded-full border border-cyan-400/30 bg-neutral-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:text-white"
+              >
+                {filter.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="flex flex-wrap gap-2">
+        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q1</a>
+        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q2</a>
+        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q3</a>
+        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q4</a>
+      </div>
+    </nav>
 
     {
       quarters.map((quarter) => (
@@ -204,47 +215,5 @@ const statusClass = (status: Status) => {
         </section>
       ))
     }
-
-    <section id="pc-2026" class="space-y-3">
-      <h2 class="text-xl font-bold text-white">PC Games 2026</h2>
-      <ul class="space-y-2 text-sm">
-        {
-          games
-            .filter((game) => game.platforms.includes('PC'))
-            .map((game) => (
-              <li>
-                {game.slug ? (
-                  <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
-                    {game.title}
-                  </a>
-                ) : (
-                  game.title
-                )}
-              </li>
-            ))
-        }
-      </ul>
-    </section>
-
-    <section id="ps5-2026" class="space-y-3">
-      <h2 class="text-xl font-bold text-white">PS5 Games 2026</h2>
-      <ul class="space-y-2 text-sm">
-        {
-          games
-            .filter((game) => game.platforms.includes('PS5'))
-            .map((game) => (
-              <li>
-                {game.slug ? (
-                  <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
-                    {game.title}
-                  </a>
-                ) : (
-                  game.title
-                )}
-              </li>
-            ))
-        }
-      </ul>
-    </section>
   </section>
 </Layout>
