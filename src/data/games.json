@@ -1,0 +1,11 @@
+[
+  {
+    "slug": "example-game",
+    "title": "Example Game",
+    "releaseDate": "2026-03-15",
+    "platforms": ["PC", "PS5", "Xbox"],
+    "genre": "Action",
+    "cover": "/covers/example-game.jpg",
+    "summary": "Mock entry for local SSG builds."
+  }
+]
