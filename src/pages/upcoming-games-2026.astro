@@ -1,0 +1,33 @@
+---
+export const prerender = true;
+
+import Layout from '../components/Layout.astro';
+import games from '../data/games.json';
+
+const sorted = [...games].sort((a, b) => a.releaseDate.localeCompare(b.releaseDate));
+---
+
+<Layout
+  title="Upcoming Games 2026"
+  description="2026 game release calendar."
+>
+  <section class="space-y-6">
+    <h1 class="text-3xl font-bold tracking-tight">Upcoming Games 2026</h1>
+    <p class="text-neutral-400">Release calendar hub. Dates come from local mock data.</p>
+
+    <ol class="space-y-3">
+      {
+        sorted.map((game) => (
+          <li class="flex items-baseline justify-between gap-4 border-b border-neutral-800 py-3">
+            <a href={`/games/${game.slug}`} class="font-medium hover:text-white">
+              {game.title}
+            </a>
+            <time class="shrink-0 text-sm text-neutral-500" datetime={game.releaseDate}>
+              {game.releaseDate}
+            </time>
+          </li>
+        ))
+      }
+    </ol>
+  </section>
+</Layout>
