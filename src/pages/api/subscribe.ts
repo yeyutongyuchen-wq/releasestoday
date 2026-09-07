@@ -1,25 +1,14 @@
 export const prerender = false;
 
-type SubscribeBody = {
-  email?: unknown;
-  game_id?: unknown;
-};
+import { env } from 'cloudflare:workers';
 
-function getDb(locals: App.Locals) {
-  const db = locals.runtime?.env?.DB;
-  if (!db) {
-    throw new Error('D1 binding DB is missing');
-  }
-  return db;
-}
-
-export async function POST({ request, locals }: { request: Request; locals: App.Locals }) {
+export async function POST({ request }: { request: Request }) {
   const contentType = request.headers.get('content-type') ?? '';
   if (!contentType.includes('application/json')) {
     return Response.json({ ok: false, error: 'Unsupported Media Type' }, { status: 415 });
   }
 
-  const body = (await request.json().catch(() => null)) as SubscribeBody | null;
+  const body = await request.json().catch(() => null);
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
   const gameId = typeof body?.game_id === 'string' ? body.game_id.trim() : '';
 
@@ -31,8 +20,12 @@ export async function POST({ request, locals }: { request: Request; locals: App.
     return Response.json({ ok: false, error: 'Invalid game_id' }, { status: 400 });
   }
 
+  const db = (env as { DB?: D1Database }).DB;
+  if (!db) {
+    return Response.json({ ok: false, error: 'D1 binding DB is missing' }, { status: 500 });
+  }
+
   try {
-    const db = getDb(locals);
     await db
       .prepare('INSERT INTO subscribers (email, game_id) VALUES (?, ?)')
       .bind(email, gameId)
@@ -40,11 +33,14 @@ export async function POST({ request, locals }: { request: Request; locals: App.
 
     return Response.json({ ok: true }, { status: 201 });
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const err = error as { message?: string; cause?: { message?: string } };
+    const message = [err?.message, err?.cause?.message].filter(Boolean).join(' | ');
+
     if (message.includes('UNIQUE') || message.includes('constraint')) {
       return Response.json({ ok: false, error: 'Already subscribed' }, { status: 409 });
     }
-    return Response.json({ ok: false, error: 'Database error' }, { status: 500 });
+
+    return Response.json({ ok: false, error: message || 'Database error' }, { status: 500 });
   }
 }
 
