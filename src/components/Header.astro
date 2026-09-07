@@ -1,0 +1,31 @@
+---
+const pathname = Astro.url.pathname;
+
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/upcoming-games-2026', label: '2026 Calendar' },
+];
+---
+
+<header class="border-b border-neutral-800">
+  <div class="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
+    <a href="/" class="text-lg font-semibold tracking-tight">
+      Releases Today
+    </a>
+    <nav class="flex gap-4 text-sm">
+      {
+        links.map((link) => (
+          <a
+            href={link.href}
+            class:list={[
+              'hover:text-white',
+              pathname === link.href ? 'text-white' : 'text-neutral-400',
+            ]}
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+  </div>
+</header>
