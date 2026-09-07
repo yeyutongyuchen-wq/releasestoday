@@ -138,7 +138,7 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
       <p class="mt-2 text-sm text-neutral-400">
         One email when the date moves or the game goes live. No digest list.
       </p>
-      <form id="subscribe-form" class="mt-5 flex flex-col gap-3 sm:flex-row" data-game-id={game.slug}>
+      <form id="subscribe-form" class="mt-5 flex flex-col gap-3 sm:flex-row">
         <label class="sr-only" for="email">Email</label>
         <input
           id="email"
@@ -228,7 +228,6 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
       >
         <p class="font-semibold text-amber-200">Your GPU might struggle. Check upgraded GPUs on Amazon.</p>
         <a
-          id="amazon-link"
           href="https://www.amazon.com/s?k=graphics+card"
           rel="nofollow sponsored noopener noreferrer"
           target="_blank"
@@ -256,16 +255,13 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
       const releaseAttr = document.querySelector('time[datetime]')?.getAttribute('datetime');
       if (countdownEl && releaseAttr) {
         const target = Date.parse(releaseAttr + 'T00:00:00Z');
-        const tick = () => {
-          const diff = target - Date.now();
-          if (diff <= 0) {
-            countdownEl.textContent = 'Release window reached.';
-            return;
-          }
-          const days = Math.floor(diff / 86400000);
-          countdownEl.textContent = days + ' days until the listed release date (UTC).';
-        };
-        tick();
+        const diff = target - Date.now();
+        if (diff <= 0) {
+          countdownEl.textContent = 'Release window reached.';
+        } else {
+          countdownEl.textContent =
+            Math.floor(diff / 86400000) + ' days until the listed release date (UTC).';
+        }
       }
 
       if (form && statusEl) {
@@ -313,16 +309,14 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
       };
 
       const gpu = detectGpu();
-      const ua = navigator.userAgent || '';
-      const haystack = (gpu + ' ' + ua).toLowerCase();
+      const haystack = (gpu + ' ' + (navigator.userAgent || '')).toLowerCase();
       if (gpuStatus) {
         gpuStatus.textContent = gpu
           ? 'Detected GPU: ' + gpu
           : 'GPU could not be detected. Compare your card with the recommended GPU above.';
       }
       const weak = weakTokens.some((token) => haystack.includes(token));
-      const mentionsOld = /gtx|1060|1650|1660|2060/.test(haystack);
-      if (banner && (weak || mentionsOld) && recGpu) {
+      if (banner && weak && recGpu) {
         banner.hidden = false;
       }
     })();
