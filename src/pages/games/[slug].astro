@@ -1,0 +1,22 @@
+---
+export const prerender = true;
+
+import Layout from '../../components/Layout.astro';
+import games from '../../data/games.json';
+
+export function getStaticPaths() {
+  return games.map((game) => ({
+    params: { slug: game.slug },
+    props: { game },
+  }));
+}
+
+const { game } = Astro.props;
+---
+
+<Layout title={game.title}>
+  <article>
+    <h1>{game.title}</h1>
+    <time datetime={game.releaseDate}>{game.releaseDate}</time>
+  </article>
+</Layout>
