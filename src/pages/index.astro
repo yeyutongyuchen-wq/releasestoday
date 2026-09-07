@@ -2,34 +2,259 @@
 export const prerender = true;
 
 import Layout from '../components/Layout.astro';
-import games from '../data/games.json';
+
+type Status = 'Locked' | 'Delayed' | 'Confirmed' | 'TBA' | 'Rumored';
+
+type CardGame = {
+  title: string;
+  slug?: string;
+  release_date: string;
+  platforms: string[];
+  status: Status;
+  featured?: boolean;
+};
+
+const catalog: CardGame[] = [
+  {
+    title: 'Eclipse Protocol',
+    slug: 'eclipse-protocol',
+    release_date: '2026-09-18',
+    platforms: ['PC', 'PS5', 'Xbox Series X'],
+    status: 'Locked',
+    featured: true,
+  },
+  {
+    title: 'Grand Theft Auto VI',
+    slug: 'grand-theft-auto-vi',
+    release_date: '2026-11-20',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'Delayed',
+    featured: true,
+  },
+  {
+    title: 'Night Circuit',
+    release_date: '2026-09-11',
+    platforms: ['PC', 'PS5'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Iron Harbor',
+    release_date: '2026-09-11',
+    platforms: ['PS5', 'Xbox Series X'],
+    status: 'Confirmed',
+  },
+  {
+    title: 'Ashveil Online',
+    release_date: '2026-09-09',
+    platforms: ['PC'],
+    status: 'Rumored',
+  },
+];
+
+const todayKey = new Date().toISOString().slice(0, 10);
+const todays = catalog.filter((game) => game.release_date === todayKey);
+const nextDrop =
+  catalog
+    .filter((game) => game.release_date >= todayKey && game.slug)
+    .sort((a, b) => a.release_date.localeCompare(b.release_date))[0] ??
+  catalog.find((game) => game.slug === 'grand-theft-auto-vi')!;
+
+const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const now = new Date();
+const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+const utcDay = monday.getUTCDay();
+const offsetToMon = utcDay === 0 ? -6 : 1 - utcDay;
+monday.setUTCDate(monday.getUTCDate() + offsetToMon);
+
+const weekDays = weekdayNames.map((label, index) => {
+  const date = new Date(monday);
+  date.setUTCDate(monday.getUTCDate() + index);
+  const key = date.toISOString().slice(0, 10);
+  const items = catalog.filter((game) => game.release_date === key);
+  return {
+    label,
+    key,
+    items,
+    collision: items.filter((game) => game.status !== 'Rumored').length >= 2,
+  };
+});
+
+const changelog = [
+  { game: 'Grand Theft Auto VI', slug: 'grand-theft-auto-vi', note: 'Locked Window', when: '6h ago' },
+  { game: 'Northstar 2', note: 'Delayed to 2027', when: '18h ago' },
+  { game: 'Eclipse Protocol', slug: 'eclipse-protocol', note: 'Date confirmed Sep 18', when: '41h ago' },
+];
+
+const formatDate = (iso: string) =>
+  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+
+const statusClass = (status: Status) =>
+  status === 'Locked' || status === 'Confirmed'
+    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+    : status === 'Delayed'
+      ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+      : 'border-neutral-600 bg-neutral-800 text-neutral-300';
 ---
 
-<Layout title="Releases Today" description="Upcoming game releases calendar.">
-  <section class="space-y-6">
-    <h1 class="text-3xl font-bold tracking-tight">Releases Today</h1>
-    <p class="text-neutral-400">
-      Track upcoming game launches. Static pages are prerendered; only subscribe runs on the edge.
-    </p>
-    <p>
-      <a href="/upcoming-games-2026" class="text-sky-400 hover:text-sky-300">
+<Layout
+  title="Video Game Release Calendar"
+  description="Today's video game releases, this week's schedule, and the 2026 calendar."
+>
+  <div class="space-y-10">
+    <header class="space-y-3 border-b border-cyan-500/20 pb-8">
+      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">Releases Today</p>
+      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">Video Game Release Calendar</h1>
+      <p id="et-clock" class="font-mono text-sm text-neutral-400">US Eastern Time (ET) loading…</p>
+      <a
+        href="/upcoming-games-2026"
+        class="inline-flex text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+      >
         Open the 2026 calendar →
       </a>
-    </p>
+    </header>
 
-    <ul class="grid gap-4">
-      {
-        games.map((game) => (
-          <li class="rounded-lg border border-neutral-800 p-4">
-            <a href={`/games/${game.slug}`} class="text-lg font-medium hover:text-white">
-              {game.title}
-            </a>
-            <p class="mt-1 text-sm text-neutral-500">
-              {game.releaseDate} · {game.platforms.join(' / ')}
-            </p>
-          </li>
-        ))
-      }
-    </ul>
-  </section>
+    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+      <div class="space-y-10">
+        <section class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">Today's Releases</h2>
+          {
+            todays.length > 0 ? (
+              <ul class="grid gap-4">
+                {todays.map((game) => (
+                  <li>
+                    {game.slug ? (
+                      <a
+                        href={`/games/${game.slug}`}
+                        class="block rounded-2xl border border-cyan-400/20 bg-neutral-900/80 p-5 hover:border-cyan-300/50"
+                      >
+                        <p class="text-lg font-bold text-white">{game.title}</p>
+                        <p class="mt-1 text-sm text-cyan-300">{formatDate(game.release_date)}</p>
+                      </a>
+                    ) : (
+                      <div class="rounded-2xl border border-neutral-800 bg-neutral-900/80 p-5">
+                        <p class="text-lg font-bold text-white">{game.title}</p>
+                      </div>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <a
+                href={`/games/${nextDrop.slug}`}
+                class="block overflow-hidden rounded-2xl border border-cyan-400/20 bg-neutral-900/80 hover:border-cyan-300/40"
+              >
+                <div class="h-28 bg-gradient-to-r from-cyan-500/20 via-fuchsia-500/10 to-neutral-900"></div>
+                <div class="space-y-3 p-5">
+                  <p class="text-xs uppercase tracking-[0.2em] text-neutral-400">Next major release</p>
+                  <h3 class="text-2xl font-black text-white">{nextDrop.title}</h3>
+                  <p class="text-cyan-300">{formatDate(nextDrop.release_date)}</p>
+                  <div class="flex flex-wrap gap-2">
+                    {nextDrop.platforms.map((platform) => (
+                      <span class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase text-fuchsia-200">
+                        {platform}
+                      </span>
+                    ))}
+                    <span class:list={['rounded-full border px-3 py-1 text-xs font-semibold', statusClass(nextDrop.status)]}>
+                      {nextDrop.status}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            )
+          }
+        </section>
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">This Week's Focus</h2>
+          <ol class="space-y-3">
+            {
+              weekDays.map((day) => (
+                <li class="rounded-xl border border-neutral-800 bg-neutral-900/60 p-4">
+                  <div class="mb-2 flex items-center justify-between gap-3">
+                    <p class="text-sm font-semibold text-white">
+                      {day.label}
+                      <span class="ml-2 font-mono text-xs text-neutral-500">{day.key.slice(5)}</span>
+                    </p>
+                    {day.collision && (
+                      <span class="rounded-full border border-rose-500/40 bg-rose-500/15 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-rose-300">
+                        Collision
+                      </span>
+                    )}
+                  </div>
+                  {day.items.length === 0 ? (
+                    <p class="text-sm text-neutral-500">No tracked mid-size or AAA drops.</p>
+                  ) : (
+                    <ul class="space-y-2">
+                      {day.items.map((game) => (
+                        <li class="flex flex-wrap items-center justify-between gap-2 text-sm">
+                          {game.slug ? (
+                            <a href={`/games/${game.slug}`} class="font-medium text-cyan-200 hover:text-white">
+                              {game.title}
+                            </a>
+                          ) : (
+                            <span class="text-neutral-200">{game.title}</span>
+                          )}
+                          <span class="text-neutral-500">{game.platforms.join(' / ')}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))
+            }
+          </ol>
+        </section>
+      </div>
+
+      <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+        <h2 class="text-lg font-bold text-white">72h Changelog</h2>
+        <ol class="space-y-3 border-l border-dashed border-cyan-400/30 pl-4">
+          {
+            changelog.map((item) => (
+              <li>
+                <p class="font-mono text-[11px] uppercase tracking-widest text-neutral-500">{item.when}</p>
+                {item.slug ? (
+                  <a href={`/games/${item.slug}`} class="text-sm font-semibold text-white hover:text-cyan-300">
+                    {item.game}
+                  </a>
+                ) : (
+                  <p class="text-sm font-semibold text-white">{item.game}</p>
+                )}
+                <p class="text-sm text-neutral-400">{item.note}</p>
+              </li>
+            ))
+          }
+        </ol>
+        <a
+          href="/upcoming-games-2026"
+          class="inline-block text-sm font-semibold text-cyan-300 hover:text-cyan-200"
+        >
+          Full 2026 calendar →
+        </a>
+      </aside>
+    </div>
+  </div>
+
+  <script is:inline>
+    (function () {
+      const el = document.getElementById('et-clock');
+      if (!el) return;
+      const fmt = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      });
+      el.textContent = 'Current US Eastern Time: ' + fmt.format(new Date());
+    })();
+  </script>
 </Layout>
