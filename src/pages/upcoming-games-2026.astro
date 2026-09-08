@@ -2,246 +2,123 @@
 export const prerender = true;
 
 import Layout from '../components/Layout.astro';
+import games from '../data/games.json';
 
-type Status = 'Confirmed' | 'TBA' | 'Rumored' | 'Locked' | 'Delayed';
+type Status = 'Locked' | 'Delayed' | 'TBA' | 'Rumored' | 'Released';
 
-type HubGame = {
+type Game = {
   title: string;
-  slug?: string;
+  slug: string;
   release_date: string;
-  platforms: string[];
   status: Status;
+  platforms: string[];
   cover_url: string;
-  youtube_id?: string;
-  note?: string;
+  specs_rec?: { gpu?: string };
 };
 
-const games: HubGame[] = [
-  {
-    title: 'Eclipse Protocol',
-    slug: 'eclipse-protocol',
-    release_date: '2026-09-18',
-    platforms: ['PC', 'PS5', 'Xbox Series X'],
-    status: 'Confirmed',
-    cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=240&q=80',
-    youtube_id: 'dQw4w9WgXcQ',
-  },
-  {
-    title: 'Grand Theft Auto VI',
-    slug: 'grand-theft-auto-vi',
-    release_date: '2026-11-20',
-    platforms: ['PS5', 'Xbox Series X'],
-    status: 'Confirmed',
-    cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=240&q=80',
-    youtube_id: 'QdBZY2fkU-0',
-  },
-  {
-    title: 'Prismatic Tactics',
-    release_date: '2026-02-13',
-    platforms: ['PC', 'Switch'],
-    status: 'Confirmed',
-    cover_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=240&q=80',
-  },
-  {
-    title: 'Red Harbor',
-    release_date: '2026-03-27',
-    platforms: ['PS5', 'Xbox Series X'],
-    status: 'TBA',
-    cover_url: 'https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?auto=format&fit=crop&w=240&q=80',
-  },
-  {
-    title: 'Lumen Drive',
-    release_date: '2026-05-22',
-    platforms: ['PC'],
-    status: 'Rumored',
-    cover_url: 'https://images.unsplash.com/photo-1538481199705-c710c4e84cb8?auto=format&fit=crop&w=240&q=80',
-  },
-  {
-    title: 'Ashveil Online',
-    release_date: '2026-07-10',
-    platforms: ['PC', 'PS5'],
-    status: 'TBA',
-    cover_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=240&q=80',
-  },
-  {
-    title: 'Night Circuit',
-    release_date: '2026-09-11',
-    platforms: ['PC', 'PS5'],
-    status: 'Confirmed',
-    note: 'Collision',
-    cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=240&q=70',
-  },
-  {
-    title: 'Iron Harbor',
-    release_date: '2026-09-11',
-    platforms: ['PS5', 'Xbox Series X'],
-    status: 'Confirmed',
-    note: 'Collision',
-    cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=240&q=70',
-  },
-  {
-    title: 'Winter Protocol',
-    release_date: '2026-12-04',
-    platforms: ['PC', 'PS5', 'Xbox Series X'],
-    status: 'Rumored',
-    cover_url: 'https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?auto=format&fit=crop&w=240&q=70',
-  },
-];
+const catalog = games as Game[];
 
-const quarters = [
-  { id: 'q1', label: 'Q1 2026', months: [1, 2, 3] },
-  { id: 'q2', label: 'Q2 2026', months: [4, 5, 6] },
-  { id: 'q3', label: 'Q3 2026', months: [7, 8, 9] },
-  { id: 'q4', label: 'Q4 2026', months: [10, 11, 12] },
-];
-
-const platformFilters = [
-  { href: '/pc-games-2026/', label: 'PC Games 2026' },
-  { href: '/ps5-games-2026/', label: 'PS5 Games 2026' },
-  { href: '/xbox-games-2026/', label: 'Xbox Games 2026' },
-  { href: '/switch-2-games-2026/', label: 'Switch 2 Games 2026' },
-];
-
-const monthName = (month: number) =>
-  new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' });
-
-const formatDate = (iso: string) =>
-  new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-
-const statusClass = (status: Status) => {
-  if (status === 'Confirmed' || status === 'Locked') return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300';
-  if (status === 'Delayed' || status === 'TBA') return 'border-amber-400/40 bg-amber-400/10 text-amber-300';
-  return 'border-neutral-600 bg-neutral-800 text-neutral-300';
+const quarterOf = (date: string) => {
+  if (!date) return 'TBA';
+  const month = Number(date.slice(5, 7));
+  if (month <= 3) return 'Q1';
+  if (month <= 6) return 'Q2';
+  if (month <= 9) return 'Q3';
+  return 'Q4';
 };
+
+const sections = [
+  { id: 'q1', label: 'Q1 2026', key: 'Q1' },
+  { id: 'q2', label: 'Q2 2026', key: 'Q2' },
+  { id: 'q3', label: 'Q3 2026', key: 'Q3' },
+  { id: 'q4', label: 'Q4 2026', key: 'Q4' },
+  { id: 'tba', label: 'Date TBA', key: 'TBA' },
+].map((section) => ({
+  ...section,
+  items: catalog.filter((game) => quarterOf(game.release_date) === section.key),
+}));
+
+const statusClass = (status: Status) =>
+  status === 'Released'
+    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+    : status === 'Locked'
+      ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300'
+      : status === 'Delayed'
+        ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+        : 'border-neutral-600 bg-neutral-800 text-neutral-300';
 ---
 
-<Layout
-  title="Upcoming Games 2026: Video Game Release Calendar"
-  description="2026 video game release calendar with covers, platforms, and entity-page links."
->
-  <section class="space-y-8">
-    <header class="space-y-4 border-b border-cyan-500/20 pb-8">
-      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">2026 Hub</p>
-      <h1 class="text-3xl font-black tracking-tight text-white sm:text-5xl">
+<Layout title="Upcoming Games 2026: Video Game Release Calendar" description="2026 video game release calendar by quarter.">
+  <div class="space-y-8">
+    <header class="space-y-4">
+      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
         Upcoming Games 2026: Video Game Release Calendar
       </h1>
+      <nav class="flex flex-wrap gap-2" aria-label="Platform filters">
+        <a href="/pc-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">PC Games 2026</a>
+        <a href="/ps5-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">PS5 Games 2026</a>
+        <a href="/xbox-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">Xbox Games 2026</a>
+        <a href="/switch-2-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">Switch 2 Games 2026</a>
+      </nav>
     </header>
 
-    <nav aria-label="Platform filters" class="space-y-3">
-      <h2 class="text-sm font-semibold uppercase tracking-[0.2em] text-neutral-400">Platform Filters</h2>
-      <ul class="flex flex-wrap gap-2">
-        {
-          platformFilters.map((filter) => (
-            <li>
-              <a
-                href={filter.href}
-                class="inline-flex rounded-full border border-cyan-400/30 bg-neutral-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-cyan-200 hover:border-cyan-300"
-              >
-                {filter.label}
-              </a>
-            </li>
-          ))
-        }
-      </ul>
-      <div class="flex flex-wrap gap-2">
-        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q1</a>
-        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q2</a>
-        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q3</a>
-        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q4</a>
-      </div>
-    </nav>
-
-    {
-      quarters.map((quarter) => (
-        <section id={quarter.id} class="space-y-4">
-          <h2 class="text-2xl font-bold text-white">{quarter.label}</h2>
-          <div class="overflow-x-auto rounded-2xl border border-neutral-800">
-            <table class="min-w-full text-left text-sm">
-              <thead class="bg-neutral-900 text-xs uppercase tracking-widest text-neutral-500">
-                <tr>
-                  <th class="px-4 py-3">Title</th>
-                  <th class="px-4 py-3">Date</th>
-                  <th class="px-4 py-3">Platforms</th>
-                  <th class="px-4 py-3">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {quarter.months.flatMap((month) => {
-                  const rows = games
-                    .filter((game) => Number(game.release_date.slice(5, 7)) === month)
-                    .sort((a, b) => a.release_date.localeCompare(b.release_date));
-                  if (rows.length === 0) {
-                    return [
-                      <tr class="border-t border-neutral-800">
-                        <td class="px-4 py-3 text-neutral-500" colspan="4">
-                          {monthName(month)} — no tracked AAA window yet
-                        </td>
-                      </tr>,
-                    ];
-                  }
-                  return rows.map((game) => {
-                    const collision = (game.note || game.status || '').toLowerCase().includes('collision');
-                    return (
-                      <tr
-                        class:list={[
-                          'border-t border-neutral-800',
-                          collision && 'border-l-2 border-l-rose-500 bg-red-950/20',
-                        ]}
-                      >
-                        <td class="px-4 py-3">
-                          <div class="flex items-center gap-3">
-                            <img
-                              src={game.cover_url}
-                              alt=""
-                              width="48"
-                              height="64"
-                              class="h-16 w-12 rounded-md object-cover"
-                            />
-                            <div>
-                              {game.slug ? (
-                                <a href={`/games/${game.slug}`} class="font-medium text-cyan-200 hover:text-white">
-                                  {game.title}
-                                </a>
-                              ) : (
-                                <span class="font-medium text-white">{game.title}</span>
-                              )}
-                              {collision && (
-                                <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-rose-300">Collision</p>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td class="px-4 py-3 text-neutral-300">
-                          <time datetime={game.release_date}>{formatDate(game.release_date)}</time>
-                        </td>
-                        <td class="px-4 py-3">
-                          <div class="flex flex-wrap gap-1">
-                            {game.platforms.map((platform) => (
-                              <span class="rounded-full border border-fuchsia-400/20 px-2 py-0.5 text-[11px] uppercase text-fuchsia-200">
-                                {platform}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td class="px-4 py-3">
-                          <span class:list={['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClass(game.status)]}>
-                            {game.status}
-                          </span>
-                        </td>
-                      </tr>
-                    );
-                  });
-                })}
-              </tbody>
-            </table>
-          </div>
+    {sections.map((section) => (
+      <>
+        {section.key === 'Q3' && (
+          <div class="ad-slot hidden min-h-0" data-ad-format="in-article" aria-hidden="true"></div>
+        )}
+        <section id={section.id} class="space-y-3">
+          <h2 class="text-2xl font-bold text-white">{section.label}</h2>
+          {section.items.length === 0 ? (
+            <p class="rounded-xl border border-neutral-800 bg-neutral-900/40 px-4 py-6 text-sm text-neutral-500">
+              No tracked titles in this window yet.
+            </p>
+          ) : (
+            <div class="overflow-x-auto rounded-2xl border border-neutral-800">
+              <table class="min-w-full text-left text-sm">
+                <thead class="bg-neutral-900 text-xs uppercase tracking-widest text-neutral-400">
+                  <tr>
+                    <th class="px-4 py-3">Title</th>
+                    <th class="px-4 py-3">Date</th>
+                    <th class="px-4 py-3">Platforms</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3">Rec. VRAM</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {section.items.map((game) => (
+                    <tr class="border-t border-neutral-800 bg-neutral-950/40">
+                      <td class="px-4 py-3">
+                        <a href={`/games/${game.slug}`} class="inline-flex items-center gap-3 font-semibold text-cyan-200 hover:text-white">
+                          <img src={game.cover_url} alt="" width="48" height="64" class="h-16 w-12 rounded-md object-cover" />
+                          {game.title}
+                        </a>
+                      </td>
+                      <td class="px-4 py-3 font-mono text-neutral-300">{game.release_date || 'TBA'}</td>
+                      <td class="px-4 py-3 text-neutral-300">{game.platforms.join(', ')}</td>
+                      <td class="px-4 py-3">
+                        <span class:list={['rounded-full border px-2 py-0.5 text-xs font-semibold', statusClass(game.status)]}>
+                          {game.status}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3 text-neutral-300">{game.specs_rec?.gpu || '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </section>
-      ))
-    }
-  </section>
+      </>
+    ))}
+  </div>
+
+  <script is:inline>
+    document.querySelectorAll('.ad-slot').forEach((slot) => {
+      if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) {
+        slot.classList.add('hidden');
+        slot.style.display = 'none';
+      }
+    });
+  </script>
 </Layout>
