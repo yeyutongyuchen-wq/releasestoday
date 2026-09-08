@@ -2,6 +2,7 @@
 export const prerender = true;
 
 import Layout from '../../components/Layout.astro';
+import games from '../../data/games.json';
 
 type DelayEvent = {
   date: string;
@@ -30,62 +31,7 @@ type Game = {
 };
 
 export function getStaticPaths() {
-  const games: Game[] = [
-    {
-      title: 'Grand Theft Auto VI',
-      slug: 'grand-theft-auto-vi',
-      release_date: '2026-11-20',
-      platforms: ['PS5', 'Xbox Series X'],
-      status: 'Delayed',
-      delay_history: [
-        { date: '2023-12', type: 'First Announcement' },
-        { date: '2025-05', type: 'Window Confirmed', reason: 'Fall 2025 target' },
-        { date: '2026-05', type: 'Delayed', reason: 'Polishing' },
-        { date: '2026-11-20', type: 'Locked Window' },
-      ],
-      specs_min: {
-        cpu: 'Intel Core i7-10700K / AMD Ryzen 7 3700X',
-        ram: '16 GB',
-        storage: '150 GB SSD',
-        gpu: 'NVIDIA GeForce RTX 3060 / AMD Radeon RX 6600 XT',
-      },
-      specs_rec: {
-        cpu: 'Intel Core i7-12700K / AMD Ryzen 7 5800X3D',
-        ram: '32 GB',
-        storage: '150 GB NVMe SSD',
-        gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
-      },
-      cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
-      youtube_id: 'QdBZY2fkU-0',
-    },
-    {
-      title: 'Eclipse Protocol',
-      slug: 'eclipse-protocol',
-      release_date: '2026-09-18',
-      platforms: ['PC', 'PS5', 'Xbox Series X'],
-      status: 'Locked',
-      delay_history: [
-        { date: '2025-03', type: 'First Announcement' },
-        { date: '2026-01', type: 'Date Locked', reason: 'Production complete' },
-      ],
-      specs_min: {
-        cpu: 'Intel Core i5-10400 / AMD Ryzen 5 3600',
-        ram: '16 GB',
-        storage: '80 GB SSD',
-        gpu: 'NVIDIA GeForce GTX 1660 Super / AMD Radeon RX 5600 XT',
-      },
-      specs_rec: {
-        cpu: 'Intel Core i7-12700 / AMD Ryzen 7 5700X',
-        ram: '16 GB',
-        storage: '80 GB NVMe SSD',
-        gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
-      },
-      cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
-      youtube_id: 'QdBZY2fkU-0',
-    },
-  ];
-
-  return games.map((game) => ({
+  return (games as Game[]).map((game) => ({
     params: { slug: game.slug },
     props: { game },
   }));
@@ -244,7 +190,7 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
       >
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">Upgrade brief</p>
         <h3 class="mt-2 text-base font-bold leading-6 text-amber-100">
-          🚀 Ready for an upgrade? Explore budget-friendly & top-tier GPUs optimized for this game on Amazon.
+          Ready for an upgrade? Explore budget-friendly & top-tier GPUs optimized for this game on Amazon.
         </h3>
         <a
           href="https://www.amazon.com/s?k=graphics+card"
@@ -362,12 +308,12 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
         if (verdict === 'pass') {
           hwPanel.classList.add('border-emerald-400/40');
           hwStatus.textContent =
-            '✨ Hardware Scan: Your ' + label + ' is fully capable of running this game at Recommended settings. Enjoy!';
+            'Hardware Scan: Your ' + label + ' is fully capable of running this game at Recommended settings. Enjoy!';
           showBanner(false);
         } else if (verdict === 'fail') {
           hwPanel.classList.add('border-amber-400/40');
           hwStatus.textContent =
-            '⚠️ Hardware Scan: Your ' + label + ' does not meet the recommended tier for this title. Performance issues or low frame rates may occur.';
+            'Hardware Scan: Your ' + label + ' does not meet the recommended tier for this title. Performance issues or low frame rates may occur.';
           showBanner(true);
         } else {
           hwPanel.classList.add('border-neutral-700');
