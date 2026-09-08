@@ -2,62 +2,31 @@
 export const prerender = true;
 
 import Layout from '../components/Layout.astro';
+import games from '../data/games.json';
 
-type Status = 'Locked' | 'Delayed' | 'Confirmed' | 'TBA' | 'Rumored';
+type Status = 'Locked' | 'Delayed' | 'TBA' | 'Rumored' | 'Released';
 
-type CardGame = {
+type Game = {
   title: string;
-  slug?: string;
+  slug: string;
   release_date: string;
-  platforms: string[];
   status: Status;
+  platforms: string[];
   cover_url: string;
-  note?: string;
+  affiliate_links?: { humble?: string; gmg?: string };
+  delay_history: { date: string; type: string; reason?: string }[];
 };
 
-const catalog: CardGame[] = [
-  {
-    title: 'Eclipse Protocol',
-    slug: 'eclipse-protocol',
-    release_date: '2026-09-18',
-    platforms: ['PC', 'PS5', 'Xbox Series X'],
-    status: 'Locked',
-    cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1600&q=80',
-  },
-  {
-    title: 'Grand Theft Auto VI',
-    slug: 'grand-theft-auto-vi',
-    release_date: '2026-11-20',
-    platforms: ['PS5', 'Xbox Series X'],
-    status: 'Delayed',
-    cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1600&q=80',
-  },
-  {
-    title: 'Night Circuit',
-    release_date: '2026-09-11',
-    platforms: ['PC', 'PS5'],
-    status: 'Confirmed',
-    note: 'Collision',
-    cover_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    title: 'Iron Harbor',
-    release_date: '2026-09-11',
-    platforms: ['PS5', 'Xbox Series X'],
-    status: 'Confirmed',
-    note: 'Collision',
-    cover_url: 'https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?auto=format&fit=crop&w=800&q=80',
-  },
-];
-
+const catalog = games as Game[];
 const todayKey = new Date().toISOString().slice(0, 10);
-const todays = catalog.filter((game) => game.release_date === todayKey);
-const hero =
-  todays[0] ??
-  catalog
-    .filter((game) => game.release_date >= todayKey && game.slug)
-    .sort((a, b) => a.release_date.localeCompare(b.release_date))[0] ??
-  catalog.find((game) => game.slug === 'grand-theft-auto-vi')!;
+
+const dated = catalog
+  .filter((game) => game.release_date)
+  .sort((a, b) => a.release_date.localeCompare(b.release_date));
+
+const todays = dated.filter((game) => game.release_date === todayKey);
+const upcoming = dated.filter((game) => game.release_date >= todayKey);
+const hero = todays[0] ?? upcoming[0] ?? catalog.find((game) => game.status !== 'Released') ?? catalog[0];
 
 const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const now = new Date();
@@ -70,58 +39,88 @@ const weekDays = weekdayNames.map((label, index) => {
   date.setUTCDate(monday.getUTCDate() + index);
   const key = date.toISOString().slice(0, 10);
   const items = catalog.filter((game) => game.release_date === key);
-  return { label, key, items, collision: items.filter((game) => game.status !== 'Rumored').length >= 2 };
+  return {
+    label,
+    key,
+    items,
+    collision: items.filter((game) => game.status !== 'Rumored' && game.status !== 'TBA').length >= 2,
+  };
 });
 
-const changelog = [
-  { game: 'Grand Theft Auto VI', slug: 'grand-theft-auto-vi', note: 'Locked Window', when: '6h ago' },
-  { game: 'Northstar 2', note: 'Delayed to 2027', when: '18h ago' },
-  { game: 'Eclipse Protocol', slug: 'eclipse-protocol', note: 'Date confirmed Sep 18', when: '41h ago' },
-];
+const changelog = catalog
+  .flatMap((game) => {
+    const last = game.delay_history[game.delay_history.length - 1];
+    if (!last) return [];
+    return [{
+      title: game.title,
+      slug: game.slug,
+      status: game.status,
+      platforms: game.platforms,
+      note: last.type + (last.reason ? ` · ${last.reason}` : ''),
+      when: last.date,
+    }];
+  })
+  .slice(0, 6);
+
+const buyHref = hero.affiliate_links?.humble || hero.affiliate_links?.gmg || `/games/${hero.slug}`;
 ---
 
 <Layout title="Video Game Release Calendar" description="Today's video game releases and the 2026 calendar.">
-  <div class="space-y-10">
-    <section
-      class="relative overflow-hidden rounded-3xl border border-cyan-400/20 shadow-[0_0_40px_rgba(34,211,238,0.12)]"
-      data-hero
-      data-slug={hero.slug || ''}
-      data-date={hero.release_date}
-    >
-      <img src={hero.cover_url} alt="" class="absolute inset-0 h-full w-full object-cover" />
-      <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/20"></div>
-      <div class="relative aspect-video min-h-[320px] p-6 sm:p-10">
-        <div class="absolute inset-x-6 bottom-6 space-y-4 sm:inset-x-10 sm:bottom-10">
-          <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
-            {todays.length > 0 ? "Today's Releases" : 'Next Big Release'}
-          </p>
-          <h1 class="max-w-3xl text-4xl font-black tracking-tight text-white sm:text-6xl">Video Game Release Calendar</h1>
-          <p class="text-2xl font-black text-cyan-300 sm:text-4xl">{hero.title}</p>
-          <p id="countdown" class="font-mono text-sm text-neutral-200">Calculating countdown…</p>
-          <p id="et-clock" class="font-mono text-xs text-neutral-400">US Eastern Time (ET) loading…</p>
-          {hero.slug && (
-            <form id="hero-subscribe" class="flex max-w-xl flex-col gap-3 sm:flex-row">
-              <label class="sr-only" for="hero-email">Email</label>
-              <input id="hero-email" type="email" required placeholder="you@email.com" class="w-full rounded-lg border border-white/20 bg-neutral-950/70 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-cyan-400" />
-              <button type="submit" class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Notify Me</button>
-            </form>
-          )}
-          <p id="hero-status" class="hidden text-sm" role="status"></p>
-          {hero.slug && (
+  <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+    <div class="min-w-0 space-y-8 lg:col-span-8">
+      <section class="space-y-2">
+        <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">Video Game Release Calendar</h1>
+        <p id="et-clock" class="font-mono text-xs text-neutral-400">US Eastern Time (ET) loading…</p>
+      </section>
+
+      <section
+        class="relative overflow-hidden rounded-3xl border border-cyan-400/20 shadow-[0_0_40px_rgba(34,211,238,0.12)]"
+        data-hero
+        data-slug={hero.slug}
+        data-date={hero.release_date}
+        data-status={hero.status}
+      >
+        <img src={hero.cover_url} alt="" class="absolute inset-0 h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/20"></div>
+        <div class="relative aspect-video min-h-[280px] p-6 sm:p-10">
+          <div class="absolute inset-x-6 bottom-6 space-y-3 sm:inset-x-10 sm:bottom-10">
+            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              {todays.length > 0 ? "Today's Releases" : 'Next Big Release'}
+            </p>
+            <p class="max-w-3xl text-3xl font-black text-white sm:text-5xl">{hero.title}</p>
+            <p class="text-sm font-semibold text-cyan-200">{hero.status} · {hero.platforms.join(' / ')}</p>
+            <p id="countdown" class="font-mono text-sm text-neutral-200">
+              {hero.release_date ? 'Calculating countdown…' : 'Official date not locked.'}
+            </p>
+            {hero.status === 'Released' ? (
+              <a
+                href={buyHref}
+                rel={buyHref.startsWith('http') ? 'sponsored noopener noreferrer' : undefined}
+                target={buyHref.startsWith('http') ? '_blank' : undefined}
+                class="inline-flex rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950"
+              >
+                Buy Now ↗
+              </a>
+            ) : (
+              <form id="hero-subscribe" class="flex max-w-xl flex-col gap-3 sm:flex-row">
+                <label class="sr-only" for="hero-email">Email</label>
+                <input id="hero-email" type="email" required placeholder="you@email.com" class="w-full rounded-lg border border-white/20 bg-neutral-950/70 px-4 py-3 text-sm text-white backdrop-blur outline-none focus:border-cyan-400" />
+                <button type="submit" class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Notify Me</button>
+              </form>
+            )}
+            <p id="hero-status" class="hidden text-sm" role="status"></p>
             <a href={`/games/${hero.slug}`} class="inline-flex text-sm font-semibold text-white underline decoration-cyan-400/50">
               Open entity page →
             </a>
-          )}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
       <section class="space-y-4">
         <h2 class="text-2xl font-bold text-white">This Week's Focus</h2>
         <ol class="space-y-3">
           {weekDays.map((day) => (
-            <li class:list={['rounded-xl border bg-neutral-900/60 p-4 backdrop-blur', day.collision ? 'border-rose-500/40 bg-red-950/20' : 'border-neutral-800']}>
+            <li class:list={['rounded-xl border bg-neutral-900/60 p-4', day.collision ? 'border-rose-500/40 bg-red-950/20' : 'border-neutral-800']}>
               <div class="mb-2 flex items-center justify-between">
                 <p class="text-sm font-semibold text-white">
                   {day.label}
@@ -136,13 +135,9 @@ const changelog = [
               ) : (
                 <ul class="space-y-2">
                   {day.items.map((game) => (
-                    <li class="flex items-center gap-3 text-sm">
-                      <img src={game.cover_url} alt="" width="36" height="48" class="h-12 w-9 rounded object-cover" />
-                      {game.slug ? (
-                        <a href={`/games/${game.slug}`} class="font-medium text-cyan-200 hover:text-white">{game.title}</a>
-                      ) : (
-                        <span class="text-neutral-200">{game.title}</span>
-                      )}
+                    <li class="flex items-center justify-between gap-3 text-sm">
+                      <a href={`/games/${game.slug}`} class="font-medium text-cyan-200 hover:text-white">{game.title}</a>
+                      <span class="text-xs text-neutral-400">{game.status} · {game.platforms.join(', ')}</span>
                     </li>
                   ))}
                 </ul>
@@ -152,34 +147,43 @@ const changelog = [
         </ol>
       </section>
 
-      <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
+      <div class="ad-slot hidden min-h-0" data-ad-format="horizontal" aria-hidden="true"></div>
+    </div>
+
+    <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
+      <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
         <h2 class="text-lg font-bold text-white">72h Changelog</h2>
-        <ol class="space-y-3 border-l border-dashed border-cyan-400/30 pl-4">
+        <ol class="mt-4 space-y-3 border-l border-dashed border-cyan-400/30 pl-4">
           {changelog.map((item) => (
             <li>
               <p class="font-mono text-[11px] uppercase text-neutral-500">{item.when}</p>
-              {item.slug ? (
-                <a href={`/games/${item.slug}`} class="text-sm font-semibold text-white hover:text-cyan-300">{item.game}</a>
-              ) : (
-                <p class="text-sm font-semibold text-white">{item.game}</p>
-              )}
-              <p class="text-sm text-neutral-400">{item.note}</p>
+              <a href={`/games/${item.slug}`} class="text-sm font-semibold text-white hover:text-cyan-300">{item.title}</a>
+              <p class="text-xs text-neutral-400">{item.status} · {item.platforms.join(', ')}</p>
+              <p class="text-sm text-neutral-300">{item.note}</p>
             </li>
           ))}
         </ol>
-        <a href="/upcoming-games-2026" class="inline-block text-sm font-semibold text-cyan-300">Full 2026 calendar →</a>
-      </aside>
-    </div>
+        <a href="/upcoming-games-2026" class="mt-4 inline-block text-sm font-semibold text-cyan-300">Full 2026 calendar →</a>
+      </section>
+      <div class="ad-slot hidden min-h-0" data-ad-format="vertical" aria-hidden="true"></div>
+    </aside>
   </div>
 
   <script is:inline>
     (function () {
+      const clock = document.getElementById('et-clock');
       const countdownEl = document.getElementById('countdown');
       const dateEl = document.querySelector('[data-date]');
-      const clock = document.getElementById('et-clock');
       const form = document.getElementById('hero-subscribe');
       const statusEl = document.getElementById('hero-status');
       const slug = dateEl ? dateEl.getAttribute('data-slug') || '' : '';
+
+      document.querySelectorAll('.ad-slot').forEach((slot) => {
+        if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) {
+          slot.classList.add('hidden');
+          slot.style.display = 'none';
+        }
+      });
 
       if (clock) {
         clock.textContent =
@@ -197,27 +201,27 @@ const changelog = [
 
       if (countdownEl && dateEl) {
         const raw = dateEl.getAttribute('data-date') || '';
-        const target = Date.parse(raw.length === 10 ? raw + 'T00:00:00Z' : raw);
-        const pad = (n) => String(n).padStart(2, '0');
-        const tick = () => {
-          if (!Number.isFinite(target)) {
-            countdownEl.textContent = 'Release date unavailable.';
-            return;
-          }
-          const diff = target - Date.now();
-          if (diff <= 0) {
-            countdownEl.textContent = 'Already Released';
-            return;
-          }
-          const totalSeconds = Math.floor(diff / 1000);
-          const days = Math.floor(totalSeconds / 86400);
-          const hours = Math.floor((totalSeconds % 86400) / 3600);
-          const minutes = Math.floor((totalSeconds % 3600) / 60);
-          const seconds = totalSeconds % 60;
-          countdownEl.textContent = days + 'd ' + pad(hours) + 'h ' + pad(minutes) + 'm ' + pad(seconds) + 's';
-        };
-        tick();
-        setInterval(tick, 1000);
+        if (!raw) {
+          countdownEl.textContent = 'Official date not locked.';
+        } else {
+          const target = Date.parse(raw + 'T00:00:00Z');
+          const pad = (n) => String(n).padStart(2, '0');
+          const tick = () => {
+            const diff = target - Date.now();
+            if (diff <= 0) {
+              countdownEl.textContent = 'Already Released';
+              return;
+            }
+            const s = Math.floor(diff / 1000);
+            countdownEl.textContent =
+              Math.floor(s / 86400) + 'd ' +
+              pad(Math.floor((s % 86400) / 3600)) + 'h ' +
+              pad(Math.floor((s % 3600) / 60)) + 'm ' +
+              pad(s % 60) + 's';
+          };
+          tick();
+          setInterval(tick, 1000);
+        }
       }
 
       if (form && statusEl && slug) {
