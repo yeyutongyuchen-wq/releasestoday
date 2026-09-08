@@ -220,7 +220,7 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
 
       <aside id="hw-panel" class="rounded-2xl border border-neutral-700 bg-neutral-900/80 p-5 backdrop-blur">
         <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">AI Hardware Analyzer</p>
-        <p id="hw-status" class="mt-3 text-sm text-neutral-200">Scanning local GPU…</p>
+        <p id="hw-status" class="mt-3 text-sm leading-6 text-neutral-200">Scanning local GPU…</p>
         <div id="hw-manual" hidden class="mt-4 space-y-2">
           <label for="gpu-select" class="block text-xs uppercase tracking-widest text-neutral-500">Select your GPU series</label>
           <select id="gpu-select" class="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white">
@@ -237,15 +237,22 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
         </div>
       </aside>
 
-      <aside id="amazon-banner" hidden class="translate-y-2 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5 opacity-0 transition duration-300">
-        <p class="font-semibold text-amber-200">Your GPU might struggle. Check upgraded GPUs on Amazon.</p>
+      <aside
+        id="amazon-banner"
+        hidden
+        class="mt-4 translate-y-2 rounded-2xl border border-amber-400/40 bg-neutral-950/90 p-5 opacity-0 shadow-[0_0_24px_rgba(251,191,36,0.12)] transition duration-300"
+      >
+        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">Upgrade brief</p>
+        <h3 class="mt-2 text-base font-bold leading-6 text-amber-100">
+          🚀 Ready for an upgrade? Explore budget-friendly & top-tier GPUs optimized for this game on Amazon.
+        </h3>
         <a
           href="https://www.amazon.com/s?k=graphics+card"
           rel="nofollow sponsored noopener noreferrer"
           target="_blank"
-          class="mt-3 inline-block text-sm font-semibold text-amber-100 underline decoration-amber-400/50 underline-offset-4"
+          class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-neutral-950 hover:bg-amber-300"
         >
-          Browse current GPU listings
+          View Best GPU Deals on Amazon →
         </a>
       </aside>
     </section>
@@ -265,7 +272,7 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
       const banner = document.getElementById('amazon-banner');
       const slug = page ? page.getAttribute('data-slug') || '' : '';
 
-      const passTokens = ['4060', '4070', '4080', '4090', '3070', '3080', '3090', '4070', '6750', '6800', '6900', '7600', '7700', '7800', '7900'];
+      const passTokens = ['4060', '4070', '4080', '4090', '3070', '3080', '3090', '6750', '6800', '6900', '7600', '7700', '7800', '7900'];
       const failTokens = ['1060', '1050', '1650', '1660', '1030', '580', '570', '550', 'intel', 'uhd', 'iris', 'vega 8', '620', 'mx'];
       const genericTokens = ['microsoft', 'basic render', 'generic', 'llvmpipe', 'swiftshader', 'gdi generic'];
 
@@ -360,7 +367,7 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
         } else if (verdict === 'fail') {
           hwPanel.classList.add('border-amber-400/40');
           hwStatus.textContent =
-            '⚠️ Hardware Scan: Your ' + label + ' might struggle to deliver smooth frame rates. Consider a graphics upgrade for the best experience.';
+            '⚠️ Hardware Scan: Your ' + label + ' does not meet the recommended tier for this title. Performance issues or low frame rates may occur.';
           showBanner(true);
         } else {
           hwPanel.classList.add('border-neutral-700');
