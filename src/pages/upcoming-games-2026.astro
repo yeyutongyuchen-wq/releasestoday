@@ -2,21 +2,9 @@
 export const prerender = true;
 
 import Layout from '../components/Layout.astro';
-import games from '../data/games.json';
+import { loadGamesFromD1, type Game } from '../lib/load-games';
 
-type Status = 'Locked' | 'Delayed' | 'TBA' | 'Rumored' | 'Released';
-
-type Game = {
-  title: string;
-  slug: string;
-  release_date: string;
-  status: Status;
-  platforms: string[];
-  cover_url: string;
-  specs_rec?: { gpu?: string };
-};
-
-const catalog = games as Game[];
+const catalog = await loadGamesFromD1();
 
 const quarterOf = (date: string) => {
   if (!date) return 'TBA';
@@ -33,27 +21,19 @@ const sections = [
   { id: 'q3', label: 'Q3 2026', key: 'Q3' },
   { id: 'q4', label: 'Q4 2026', key: 'Q4' },
   { id: 'tba', label: 'Date TBA', key: 'TBA' },
-].map((section) => ({
-  ...section,
-  items: catalog.filter((game) => quarterOf(game.release_date) === section.key),
-}));
+].map((section) => ({ ...section, items: catalog.filter((game) => quarterOf(game.release_date) === section.key) }));
 
-const statusClass = (status: Status) =>
-  status === 'Released'
-    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-    : status === 'Locked'
-      ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300'
-      : status === 'Delayed'
-        ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
-        : 'border-neutral-600 bg-neutral-800 text-neutral-300';
+const statusClass = (status: Game['status']) =>
+  status === 'Released' ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
+    : status === 'Locked' ? 'border-cyan-400/40 bg-cyan-400/10 text-cyan-300'
+    : status === 'Delayed' ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
+    : 'border-neutral-600 bg-neutral-800 text-neutral-300';
 ---
 
 <Layout title="Upcoming Games 2026: Video Game Release Calendar" description="2026 video game release calendar by quarter.">
   <div class="space-y-8">
     <header class="space-y-4">
-      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
-        Upcoming Games 2026: Video Game Release Calendar
-      </h1>
+      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">Upcoming Games 2026: Video Game Release Calendar</h1>
       <nav class="flex flex-wrap gap-2" aria-label="Platform filters">
         <a href="/pc-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">PC Games 2026</a>
         <a href="/ps5-games-2026/" class="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold uppercase text-cyan-200">PS5 Games 2026</a>
@@ -64,44 +44,30 @@ const statusClass = (status: Status) =>
 
     {sections.map((section) => (
       <>
-        {section.key === 'Q3' && (
-          <div class="ad-slot hidden min-h-0" data-ad-format="in-article" aria-hidden="true"></div>
-        )}
+        {section.key === 'Q3' && <div class="ad-slot hidden" data-ad-format="in-article" aria-hidden="true"></div>}
         <section id={section.id} class="space-y-3">
           <h2 class="text-2xl font-bold text-white">{section.label}</h2>
           {section.items.length === 0 ? (
-            <p class="rounded-xl border border-neutral-800 bg-neutral-900/40 px-4 py-6 text-sm text-neutral-500">
-              No tracked titles in this window yet.
-            </p>
+            <p class="rounded-xl border border-neutral-800 bg-neutral-900/40 px-4 py-6 text-sm text-neutral-500">No tracked titles in this window yet.</p>
           ) : (
             <div class="overflow-x-auto rounded-2xl border border-neutral-800">
               <table class="min-w-full text-left text-sm">
                 <thead class="bg-neutral-900 text-xs uppercase tracking-widest text-neutral-400">
-                  <tr>
-                    <th class="px-4 py-3">Title</th>
-                    <th class="px-4 py-3">Date</th>
-                    <th class="px-4 py-3">Platforms</th>
-                    <th class="px-4 py-3">Status</th>
-                    <th class="px-4 py-3">Rec. VRAM</th>
-                  </tr>
+                  <tr><th class="px-4 py-3">Title</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">Platforms</th><th class="px-4 py-3">Status</th><th class="px-4 py-3">Rec. VRAM</th></tr>
                 </thead>
                 <tbody>
                   {section.items.map((game) => (
                     <tr class="border-t border-neutral-800 bg-neutral-950/40">
                       <td class="px-4 py-3">
                         <a href={`/games/${game.slug}`} class="inline-flex items-center gap-3 font-semibold text-cyan-200 hover:text-white">
-                          <img src={game.cover_url} alt="" width="48" height="64" class="h-16 w-12 rounded-md object-cover" />
+                          {game.cover_url && <img src={game.cover_url} alt="" width="48" height="64" class="h-16 w-12 rounded-md object-cover" />}
                           {game.title}
                         </a>
                       </td>
                       <td class="px-4 py-3 font-mono text-neutral-300">{game.release_date || 'TBA'}</td>
                       <td class="px-4 py-3 text-neutral-300">{game.platforms.join(', ')}</td>
-                      <td class="px-4 py-3">
-                        <span class:list={['rounded-full border px-2 py-0.5 text-xs font-semibold', statusClass(game.status)]}>
-                          {game.status}
-                        </span>
-                      </td>
-                      <td class="px-4 py-3 text-neutral-300">{game.specs_rec?.gpu || '—'}</td>
+                      <td class="px-4 py-3"><span class:list={['rounded-full border px-2 py-0.5 text-xs font-semibold', statusClass(game.status)]}>{game.status}</span></td>
+                      <td class="px-4 py-3 text-neutral-300">{game.specs_rec.gpu}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -112,13 +78,9 @@ const statusClass = (status: Status) =>
       </>
     ))}
   </div>
-
   <script is:inline>
     document.querySelectorAll('.ad-slot').forEach((slot) => {
-      if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) {
-        slot.classList.add('hidden');
-        slot.style.display = 'none';
-      }
+      if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) slot.style.display = 'none';
     });
   </script>
 </Layout>
