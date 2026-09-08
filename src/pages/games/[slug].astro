@@ -24,6 +24,8 @@ type Game = {
   delay_history: DelayEvent[];
   specs_min: Specs;
   specs_rec: Specs;
+  cover_url: string;
+  youtube_id: string;
 };
 
 export function getStaticPaths() {
@@ -50,6 +52,9 @@ export function getStaticPaths() {
         ram: '32 GB',
         gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
       },
+      cover_url:
+        'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80',
+      youtube_id: 'QdBZY2fkU-0',
     },
     {
       title: 'Eclipse Protocol',
@@ -71,6 +76,9 @@ export function getStaticPaths() {
         ram: '16 GB',
         gpu: 'NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT',
       },
+      cover_url:
+        'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80',
+      youtube_id: 'QdBZY2fkU-0',
     },
   ];
 
@@ -96,143 +104,109 @@ const dateLabel = new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString(
   day: 'numeric',
   timeZone: 'UTC',
 });
-
-const pageTitle = `${game.title} Release Date & Countdown`;
-const pageDescription = `${game.title} release date, countdown, delay history, and PC system requirements.`;
 ---
 
-<Layout title={pageTitle} description={pageDescription}>
-  <article class="space-y-12" data-game-page data-slug={game.slug} data-rec-gpu={game.specs_rec.gpu}>
-    <header class="space-y-6 border-b border-cyan-500/20 pb-10">
-      <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">
-        Release tracker
-      </p>
-      <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
-        {game.title} Release Date & Countdown
-      </h1>
-      <div class="flex flex-wrap items-end gap-4">
-        <time
-          class="text-4xl font-black tabular-nums text-cyan-300 sm:text-5xl"
-          datetime={game.release_date}
-        >
-          {dateLabel}
-        </time>
-        <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>
-          {game.status}
-        </span>
-      </div>
-      <p id="countdown" class="font-mono text-sm text-neutral-400">Calculating countdown…</p>
-      <ul class="flex flex-wrap gap-2">
-        {
-          game.platforms.map((platform) => (
-            <li class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-fuchsia-200">
+<Layout
+  title={`${game.title} Release Date & Countdown`}
+  description={`${game.title} release date, trailer, delay history, and PC system requirements.`}
+>
+  <article class="space-y-12" data-game-page data-slug={game.slug} data-date={game.release_date} data-rec-gpu={game.specs_rec.gpu}>
+    <header class="grid items-start gap-8 border-b border-cyan-500/20 pb-10 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <figure class="overflow-hidden rounded-2xl border border-blue-400/40 shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+        <img src={game.cover_url} alt={`${game.title} cover art`} class="aspect-[3/4] w-full object-cover" width="280" height="373" />
+      </figure>
+      <div class="space-y-5">
+        <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">Release tracker</p>
+        <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
+          {game.title} Release Date & Countdown
+        </h1>
+        <div class="flex flex-wrap items-end gap-4">
+          <time class="text-4xl font-black tabular-nums text-cyan-300" datetime={game.release_date} data-date={game.release_date}>
+            {dateLabel}
+          </time>
+          <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>{game.status}</span>
+        </div>
+        <p id="countdown" class="font-mono text-sm text-neutral-400">Calculating countdown…</p>
+        <ul class="flex flex-wrap gap-2">
+          {game.platforms.map((platform) => (
+            <li class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase text-fuchsia-200">
               {platform}
             </li>
-          ))
-        }
-      </ul>
+          ))}
+        </ul>
+        <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5 backdrop-blur">
+          <h2 class="text-lg font-bold text-white">Notify me when this game launches or gets delayed</h2>
+          <form id="subscribe-form" class="mt-4 flex flex-col gap-3 sm:flex-row">
+            <label class="sr-only" for="email">Email</label>
+            <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@email.com" class="w-full rounded-lg border border-neutral-700 bg-neutral-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" />
+            <button type="submit" class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-cyan-300">Notify Me</button>
+          </form>
+          <p id="subscribe-status" class="mt-3 hidden text-sm" role="status"></p>
+          <p class="mt-3 text-[12px] leading-5 text-neutral-500">
+            Get an email notice for delays or launch. Unsubscribe anytime in accordance with our Privacy Policy.
+          </p>
+        </section>
+      </div>
     </header>
 
-    <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/80 p-6 shadow-[0_0_40px_rgba(34,211,238,0.08)]">
-      <h2 class="text-xl font-bold text-white">Notify me when this game launches or gets delayed</h2>
-      <p class="mt-2 text-sm text-neutral-400">
-        One email when the date moves or the game goes live. No digest list.
-      </p>
-      <form id="subscribe-form" class="mt-5 flex flex-col gap-3 sm:flex-row">
-        <label class="sr-only" for="email">Email</label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          autocomplete="email"
-          placeholder="you@email.com"
-          class="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-4 py-3 text-sm text-white outline-none ring-cyan-400/40 placeholder:text-neutral-500 focus:border-cyan-400 focus:ring-2"
-        />
-        <button
-          type="submit"
-          class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950 transition hover:bg-cyan-300"
-        >
-          Notify Me
-        </button>
-      </form>
-      <p id="subscribe-status" class="mt-3 hidden text-sm" role="status"></p>
-      <p class="mt-3 text-[12px] leading-5 text-neutral-500">
-        Get an email notice for delays or launch. Unsubscribe anytime in accordance with our Privacy Policy.
-      </p>
-    </section>
+    {game.delay_history.length > 0 && (
+      <section class="space-y-6">
+        <h2 class="text-2xl font-bold text-white">Release Date & Delay History</h2>
+        <ol class="relative ml-3 space-y-6 border-l border-dashed border-cyan-400/40 pl-8">
+          {game.delay_history.map((event) => (
+            <li class="relative">
+              <span class="absolute -left-[2.4rem] top-1.5 h-3 w-3 rounded-full border-2 border-neutral-950 bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
+              <p class="font-mono text-xs uppercase tracking-widest text-cyan-300">{event.date}</p>
+              <p class="mt-1 font-semibold text-white">{event.type}</p>
+              {event.reason && <p class="mt-1 text-sm text-neutral-400">{event.reason}</p>}
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
 
-    {
-      game.delay_history.length > 0 && (
-        <section class="space-y-6">
-          <h2 class="text-2xl font-bold text-white">Release Date & Delay History</h2>
-          <ol class="relative ml-3 space-y-6 border-l border-dashed border-cyan-400/40 pl-8">
-            {game.delay_history.map((event) => (
-              <li class="relative">
-                <span class="absolute -left-[2.4rem] top-1.5 h-3 w-3 rounded-full border-2 border-neutral-950 bg-cyan-400 shadow-[0_0_12px_rgba(34,211,238,0.8)]" />
-                <p class="font-mono text-xs uppercase tracking-widest text-cyan-300">{event.date}</p>
-                <p class="mt-1 text-base font-semibold text-white">{event.type}</p>
-                {event.reason && <p class="mt-1 text-sm text-neutral-400">{event.reason}</p>}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )
-    }
+    {game.youtube_id && (
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-white">Official Announcement Trailer</h2>
+        <div class="overflow-hidden rounded-2xl border border-cyan-400/30 bg-neutral-950 shadow-[0_0_30px_rgba(34,211,238,0.18)]">
+          <div class="relative aspect-video">
+            <iframe
+              class="absolute inset-0 h-full w-full"
+              src={`https://www.youtube-nocookie.com/embed/${game.youtube_id}`}
+              title={`${game.title} official announcement trailer`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            />
+          </div>
+        </div>
+      </section>
+    )}
 
     <section class="space-y-6">
-      <h2 class="text-2xl font-bold text-white">
-        Can My PC Run {game.title}? System Requirements
-      </h2>
+      <h2 class="text-2xl font-bold text-white">Can My PC Run {game.title}? System Requirements</h2>
       <div class="grid gap-4 md:grid-cols-2">
         <article class="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-5">
           <h3 class="text-sm font-semibold uppercase tracking-widest text-neutral-400">Minimum</h3>
           <dl class="mt-4 space-y-3 text-sm">
-            <div>
-              <dt class="text-neutral-500">CPU</dt>
-              <dd class="text-neutral-100">{game.specs_min.cpu}</dd>
-            </div>
-            <div>
-              <dt class="text-neutral-500">RAM</dt>
-              <dd class="text-neutral-100">{game.specs_min.ram}</dd>
-            </div>
-            <div>
-              <dt class="text-neutral-500">GPU</dt>
-              <dd class="text-neutral-100">{game.specs_min.gpu}</dd>
-            </div>
+            <div><dt class="text-neutral-500">CPU</dt><dd>{game.specs_min.cpu}</dd></div>
+            <div><dt class="text-neutral-500">RAM</dt><dd>{game.specs_min.ram}</dd></div>
+            <div><dt class="text-neutral-500">GPU</dt><dd>{game.specs_min.gpu}</dd></div>
           </dl>
         </article>
         <article class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
           <h3 class="text-sm font-semibold uppercase tracking-widest text-cyan-300">Recommended</h3>
           <dl class="mt-4 space-y-3 text-sm">
-            <div>
-              <dt class="text-neutral-500">CPU</dt>
-              <dd class="text-neutral-100">{game.specs_rec.cpu}</dd>
-            </div>
-            <div>
-              <dt class="text-neutral-500">RAM</dt>
-              <dd class="text-neutral-100">{game.specs_rec.ram}</dd>
-            </div>
-            <div>
-              <dt class="text-neutral-500">GPU</dt>
-              <dd class="text-neutral-100">{game.specs_rec.gpu}</dd>
-            </div>
+            <div><dt class="text-neutral-500">CPU</dt><dd>{game.specs_rec.cpu}</dd></div>
+            <div><dt class="text-neutral-500">RAM</dt><dd>{game.specs_rec.ram}</dd></div>
+            <div><dt class="text-neutral-500">GPU</dt><dd>{game.specs_rec.gpu}</dd></div>
           </dl>
         </article>
       </div>
       <p id="gpu-status" class="text-sm text-neutral-400">Checking local GPU…</p>
-      <aside
-        id="amazon-banner"
-        hidden
-        class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5"
-      >
+      <aside id="amazon-banner" hidden class="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-5">
         <p class="font-semibold text-amber-200">Your GPU might struggle. Check upgraded GPUs on Amazon.</p>
-        <a
-          href="https://www.amazon.com/s?k=graphics+card"
-          rel="nofollow sponsored noopener noreferrer"
-          target="_blank"
-          class="mt-3 inline-block text-sm font-semibold text-amber-100 underline decoration-amber-400/50 underline-offset-4"
-        >
+        <a href="https://www.amazon.com/s?k=graphics+card" rel="nofollow sponsored noopener noreferrer" target="_blank" class="mt-3 inline-block text-sm font-semibold text-amber-100 underline">
           Browse current GPU listings
         </a>
       </aside>
@@ -242,26 +216,38 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
   <script is:inline>
     (function () {
       const page = document.querySelector('[data-game-page]');
-      if (!page) return;
-
-      const slug = page.getAttribute('data-slug') || '';
-      const recGpu = page.getAttribute('data-rec-gpu') || '';
       const countdownEl = document.getElementById('countdown');
+      const dateEl = document.querySelector('[data-date]') || document.querySelector('time[datetime]');
       const form = document.getElementById('subscribe-form');
       const statusEl = document.getElementById('subscribe-status');
       const gpuStatus = document.getElementById('gpu-status');
       const banner = document.getElementById('amazon-banner');
+      const slug = page ? page.getAttribute('data-slug') || '' : '';
+      const recGpu = page ? page.getAttribute('data-rec-gpu') || '' : '';
 
-      const releaseAttr = document.querySelector('time[datetime]')?.getAttribute('datetime');
-      if (countdownEl && releaseAttr) {
-        const target = Date.parse(releaseAttr + 'T00:00:00Z');
-        const diff = target - Date.now();
-        if (diff <= 0) {
-          countdownEl.textContent = 'Release window reached.';
-        } else {
-          countdownEl.textContent =
-            Math.floor(diff / 86400000) + ' days until the listed release date (UTC).';
-        }
+      if (countdownEl && dateEl) {
+        const raw = dateEl.getAttribute('data-date') || dateEl.getAttribute('datetime') || '';
+        const target = Date.parse(raw.length === 10 ? raw + 'T00:00:00Z' : raw);
+        const pad = (n) => String(n).padStart(2, '0');
+        const tick = () => {
+          if (!Number.isFinite(target)) {
+            countdownEl.textContent = 'Release date unavailable.';
+            return;
+          }
+          const diff = target - Date.now();
+          if (diff <= 0) {
+            countdownEl.textContent = 'Already Released';
+            return;
+          }
+          const totalSeconds = Math.floor(diff / 1000);
+          const days = Math.floor(totalSeconds / 86400);
+          const hours = Math.floor((totalSeconds % 86400) / 3600);
+          const minutes = Math.floor((totalSeconds % 3600) / 60);
+          const seconds = totalSeconds % 60;
+          countdownEl.textContent = days + 'd ' + pad(hours) + 'h ' + pad(minutes) + 'm ' + pad(seconds) + 's';
+        };
+        tick();
+        setInterval(tick, 1000);
       }
 
       if (form && statusEl) {
@@ -279,14 +265,11 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
             });
             const data = await res.json().catch(() => ({}));
             const passed = res.ok && (data.ok === true || data.success === true);
-            if (passed) {
-              statusEl.classList.add('text-emerald-400');
-              statusEl.textContent = 'You are on the list. Watch for delay or launch mail.';
-              form.reset();
-            } else {
-              statusEl.classList.add('text-rose-400');
-              statusEl.textContent = data.error || 'Could not save this subscription.';
-            }
+            statusEl.classList.add(passed ? 'text-emerald-400' : 'text-rose-400');
+            statusEl.textContent = passed
+              ? 'You are on the list. Watch for delay or launch mail.'
+              : data.error || 'Could not save this subscription.';
+            if (passed) form.reset();
           } catch {
             statusEl.classList.add('text-rose-400');
             statusEl.textContent = 'Network error. Try again.';
@@ -295,30 +278,20 @@ const pageDescription = `${game.title} release date, countdown, delay history, a
       }
 
       const weakTokens = ['gtx', '1060', '1650', '1660', '1050', '2060', 'mx', 'uhd', 'iris', 'vega 8', '620'];
-      const detectGpu = () => {
-        try {
-          const canvas = document.createElement('canvas');
-          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-          if (!gl) return '';
-          const ext = gl.getExtension('WEBGL_debug_renderer_info');
-          if (!ext) return '';
-          return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
-        } catch {
-          return '';
-        }
-      };
-
-      const gpu = detectGpu();
+      let gpu = '';
+      try {
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+        if (gl && ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
+      } catch {}
       const haystack = (gpu + ' ' + (navigator.userAgent || '')).toLowerCase();
       if (gpuStatus) {
         gpuStatus.textContent = gpu
           ? 'Detected GPU: ' + gpu
           : 'GPU could not be detected. Compare your card with the recommended GPU above.';
       }
-      const weak = weakTokens.some((token) => haystack.includes(token));
-      if (banner && weak && recGpu) {
-        banner.hidden = false;
-      }
+      if (banner && recGpu && weakTokens.some((token) => haystack.includes(token))) banner.hidden = false;
     })();
   </script>
 </Layout>
