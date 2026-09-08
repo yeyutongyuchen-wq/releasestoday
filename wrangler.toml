@@ -1,0 +1,11 @@
+name = "releasestoday-sync"
+main = "src/workers/calendar-sync.ts"
+compatibility_date = "2026-09-08"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "releasestoday-db"
+database_id = "a03575e5-179c-42c9-b8d1-8aa48f59f61f"
+
+[triggers]
+crons = ["0 8 * * *"]
