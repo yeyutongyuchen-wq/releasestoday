@@ -11,6 +11,9 @@ type HubGame = {
   release_date: string;
   platforms: string[];
   status: Status;
+  cover_url: string;
+  youtube_id?: string;
+  note?: string;
 };
 
 const games: HubGame[] = [
@@ -20,6 +23,8 @@ const games: HubGame[] = [
     release_date: '2026-09-18',
     platforms: ['PC', 'PS5', 'Xbox Series X'],
     status: 'Confirmed',
+    cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=240&q=80',
+    youtube_id: 'dQw4w9WgXcQ',
   },
   {
     title: 'Grand Theft Auto VI',
@@ -27,48 +32,59 @@ const games: HubGame[] = [
     release_date: '2026-11-20',
     platforms: ['PS5', 'Xbox Series X'],
     status: 'Confirmed',
+    cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=240&q=80',
+    youtube_id: 'QdBZY2fkU-0',
   },
   {
     title: 'Prismatic Tactics',
     release_date: '2026-02-13',
     platforms: ['PC', 'Switch'],
     status: 'Confirmed',
+    cover_url: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&w=240&q=80',
   },
   {
     title: 'Red Harbor',
     release_date: '2026-03-27',
     platforms: ['PS5', 'Xbox Series X'],
     status: 'TBA',
+    cover_url: 'https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?auto=format&fit=crop&w=240&q=80',
   },
   {
     title: 'Lumen Drive',
     release_date: '2026-05-22',
     platforms: ['PC'],
     status: 'Rumored',
+    cover_url: 'https://images.unsplash.com/photo-1538481199705-c710c4e84cb8?auto=format&fit=crop&w=240&q=80',
   },
   {
     title: 'Ashveil Online',
     release_date: '2026-07-10',
     platforms: ['PC', 'PS5'],
     status: 'TBA',
+    cover_url: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=240&q=80',
   },
   {
     title: 'Night Circuit',
     release_date: '2026-09-11',
     platforms: ['PC', 'PS5'],
     status: 'Confirmed',
+    note: 'Collision',
+    cover_url: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=240&q=70',
   },
   {
     title: 'Iron Harbor',
     release_date: '2026-09-11',
     platforms: ['PS5', 'Xbox Series X'],
     status: 'Confirmed',
+    note: 'Collision',
+    cover_url: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=240&q=70',
   },
   {
     title: 'Winter Protocol',
     release_date: '2026-12-04',
     platforms: ['PC', 'PS5', 'Xbox Series X'],
     status: 'Rumored',
+    cover_url: 'https://images.unsplash.com/photo-1486572788966-cfd3df1f5b42?auto=format&fit=crop&w=240&q=70',
   },
 ];
 
@@ -87,10 +103,7 @@ const platformFilters = [
 ];
 
 const monthName = (month: number) =>
-  new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', {
-    month: 'long',
-    timeZone: 'UTC',
-  });
+  new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString('en-US', { month: 'long', timeZone: 'UTC' });
 
 const formatDate = (iso: string) =>
   new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
@@ -101,19 +114,15 @@ const formatDate = (iso: string) =>
   });
 
 const statusClass = (status: Status) => {
-  if (status === 'Confirmed' || status === 'Locked') {
-    return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300';
-  }
-  if (status === 'Delayed' || status === 'TBA') {
-    return 'border-amber-400/40 bg-amber-400/10 text-amber-300';
-  }
+  if (status === 'Confirmed' || status === 'Locked') return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300';
+  if (status === 'Delayed' || status === 'TBA') return 'border-amber-400/40 bg-amber-400/10 text-amber-300';
   return 'border-neutral-600 bg-neutral-800 text-neutral-300';
 };
 ---
 
 <Layout
   title="Upcoming Games 2026: Video Game Release Calendar"
-  description="2026 video game release calendar for PC, PS5, Xbox, and Switch 2, including GTA VI and Eclipse Protocol."
+  description="2026 video game release calendar with covers, platforms, and entity-page links."
 >
   <section class="space-y-8">
     <header class="space-y-4 border-b border-cyan-500/20 pb-8">
@@ -121,9 +130,6 @@ const statusClass = (status: Status) => {
       <h1 class="text-3xl font-black tracking-tight text-white sm:text-5xl">
         Upcoming Games 2026: Video Game Release Calendar
       </h1>
-      <p class="max-w-3xl text-sm text-neutral-400">
-        Quarterly 2026 slate. Tracked titles link to entity pages. Dates are editorial windows, not publisher legal commitments.
-      </p>
     </header>
 
     <nav aria-label="Platform filters" class="space-y-3">
@@ -134,7 +140,7 @@ const statusClass = (status: Status) => {
             <li>
               <a
                 href={filter.href}
-                class="inline-flex rounded-full border border-cyan-400/30 bg-neutral-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-400/10 hover:text-white"
+                class="inline-flex rounded-full border border-cyan-400/30 bg-neutral-900/80 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-cyan-200 hover:border-cyan-300"
               >
                 {filter.label}
               </a>
@@ -143,10 +149,10 @@ const statusClass = (status: Status) => {
         }
       </ul>
       <div class="flex flex-wrap gap-2">
-        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q1</a>
-        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q2</a>
-        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q3</a>
-        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs font-semibold uppercase text-neutral-300 hover:text-white">Q4</a>
+        <a href="#q1" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q1</a>
+        <a href="#q2" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q2</a>
+        <a href="#q3" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q3</a>
+        <a href="#q4" class="rounded-full border border-neutral-700 px-3 py-1 text-xs uppercase text-neutral-300">Q4</a>
       </div>
     </nav>
 
@@ -178,36 +184,58 @@ const statusClass = (status: Status) => {
                       </tr>,
                     ];
                   }
-                  return rows.map((game) => (
-                    <tr class="border-t border-neutral-800">
-                      <td class="px-4 py-3 font-medium">
-                        {game.slug ? (
-                          <a href={`/games/${game.slug}`} class="text-cyan-200 hover:text-white">
-                            {game.title}
-                          </a>
-                        ) : (
-                          <span class="text-white">{game.title}</span>
-                        )}
-                      </td>
-                      <td class="px-4 py-3 text-neutral-300">
-                        <time datetime={game.release_date}>{formatDate(game.release_date)}</time>
-                      </td>
-                      <td class="px-4 py-3">
-                        <div class="flex flex-wrap gap-1">
-                          {game.platforms.map((platform) => (
-                            <span class="rounded-full border border-fuchsia-400/20 px-2 py-0.5 text-[11px] uppercase text-fuchsia-200">
-                              {platform}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">
-                        <span class:list={['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClass(game.status)]}>
-                          {game.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ));
+                  return rows.map((game) => {
+                    const collision = (game.note || game.status || '').toLowerCase().includes('collision');
+                    return (
+                      <tr
+                        class:list={[
+                          'border-t border-neutral-800',
+                          collision && 'border-l-2 border-l-rose-500 bg-red-950/20',
+                        ]}
+                      >
+                        <td class="px-4 py-3">
+                          <div class="flex items-center gap-3">
+                            <img
+                              src={game.cover_url}
+                              alt=""
+                              width="48"
+                              height="64"
+                              class="h-16 w-12 rounded-md object-cover"
+                            />
+                            <div>
+                              {game.slug ? (
+                                <a href={`/games/${game.slug}`} class="font-medium text-cyan-200 hover:text-white">
+                                  {game.title}
+                                </a>
+                              ) : (
+                                <span class="font-medium text-white">{game.title}</span>
+                              )}
+                              {collision && (
+                                <p class="mt-1 text-[11px] font-bold uppercase tracking-wide text-rose-300">Collision</p>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td class="px-4 py-3 text-neutral-300">
+                          <time datetime={game.release_date}>{formatDate(game.release_date)}</time>
+                        </td>
+                        <td class="px-4 py-3">
+                          <div class="flex flex-wrap gap-1">
+                            {game.platforms.map((platform) => (
+                              <span class="rounded-full border border-fuchsia-400/20 px-2 py-0.5 text-[11px] uppercase text-fuchsia-200">
+                                {platform}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td class="px-4 py-3">
+                          <span class:list={['rounded-full border px-2 py-0.5 text-[11px] font-semibold', statusClass(game.status)]}>
+                            {game.status}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  });
                 })}
               </tbody>
             </table>
