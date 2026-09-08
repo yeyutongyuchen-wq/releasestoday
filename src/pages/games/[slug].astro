@@ -2,40 +2,11 @@
 export const prerender = true;
 
 import Layout from '../../components/Layout.astro';
-import games from '../../data/games.json';
+import { loadGamesFromD1, type Game } from '../../lib/load-games';
 
-type DelayEvent = {
-  date: string;
-  type: string;
-  reason?: string;
-};
-
-type Specs = {
-  cpu: string;
-  ram: string;
-  storage: string;
-  gpu: string;
-};
-
-type Game = {
-  title: string;
-  slug: string;
-  release_date: string;
-  platforms: string[];
-  status: 'Locked' | 'Delayed' | 'TBA' | 'Rumored' | 'Released';
-  delay_history: DelayEvent[];
-  specs_min: Specs;
-  specs_rec: Specs;
-  cover_url: string;
-  youtube_id: string;
-  affiliate_links?: {
-    humble?: string;
-    gmg?: string;
-  };
-};
-
-export function getStaticPaths() {
-  return (games as Game[]).map((game) => ({
+export async function getStaticPaths() {
+  const games = await loadGamesFromD1();
+  return games.map((game) => ({
     params: { slug: game.slug },
     props: { game },
   }));
@@ -68,55 +39,26 @@ const recVram = recVramMatch ? recVramMatch[1] : '12';
 
 const notifyCopy =
   game.status === 'Released'
-    ? {
-        title: 'Never miss an update',
-        sub: 'Get DLC windows and historic low-price alerts for this title.',
-        cta: 'Track Game',
-      }
+    ? { title: 'Never miss an update', sub: 'Get DLC windows and historic low-price alerts for this title.', cta: 'Track Game' }
     : game.status === 'TBA' || game.status === 'Rumored'
-      ? {
-          title: 'Be the first to know the official date',
-          sub: 'One email when the calendar lock drops. No digest list.',
-          cta: 'Get Lock Notice',
-        }
-      : {
-          title: 'Notify me when this game launches or gets delayed',
-          sub: 'One email when the date moves or the game goes live.',
-          cta: 'Notify Me',
-        };
+      ? { title: 'Be the first to know the official date', sub: 'One email when the calendar lock drops. No digest list.', cta: 'Get Lock Notice' }
+      : { title: 'Notify me when this game launches or gets delayed', sub: 'One email when the date moves or the game goes live.', cta: 'Notify Me' };
 ---
 
-<Layout
-  title={`${game.title} Release Date & Countdown`}
-  description={`${game.title} release date, trailer, delay history, store links, and PC system requirements.`}
->
+<Layout title={`${game.title} Release Date & Countdown`} description={`${game.title} release date, trailer, delay history, and PC system requirements.`}>
   <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
     <div class="min-w-0 space-y-10 lg:col-span-8">
       <header class="space-y-5 border-b border-cyan-500/20 pb-8">
         <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-400">Release tracker</p>
-        <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">
-          {game.title} Release Date & Countdown
-        </h1>
+        <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">{game.title} Release Date & Countdown</h1>
         <div class="flex flex-wrap items-end gap-4">
-          <time
-            class="text-4xl font-black tabular-nums text-cyan-300"
-            datetime={game.release_date || undefined}
-            data-date={game.release_date}
-          >
-            {dateLabel}
-          </time>
-          <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>
-            {game.status}
-          </span>
+          <time class="text-4xl font-black tabular-nums text-cyan-300" datetime={game.release_date || undefined} data-date={game.release_date}>{dateLabel}</time>
+          <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>{game.status}</span>
         </div>
-        <p id="countdown" class="font-mono text-sm text-neutral-400">
-          {game.release_date ? 'Calculating countdown…' : 'Official date not locked.'}
-        </p>
+        <p id="countdown" class="font-mono text-sm text-neutral-400">{game.release_date ? 'Calculating countdown…' : 'Official date not locked.'}</p>
         <ul class="flex flex-wrap gap-2">
           {game.platforms.map((platform) => (
-            <li class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase text-fuchsia-200">
-              {platform}
-            </li>
+            <li class="rounded-full border border-fuchsia-400/30 bg-fuchsia-500/10 px-3 py-1 text-xs font-semibold uppercase text-fuchsia-200">{platform}</li>
           ))}
         </ul>
         {game.cover_url && (
@@ -145,148 +87,79 @@ const notifyCopy =
       {game.youtube_id && (
         <section class="space-y-4">
           <h2 class="text-2xl font-bold text-white">Official Announcement Trailer</h2>
-          <div class="overflow-hidden rounded-2xl border border-cyan-400/30 bg-neutral-950 shadow-[0_0_30px_rgba(34,211,238,0.18)]">
+          <div class="overflow-hidden rounded-2xl border border-cyan-400/30 bg-neutral-950">
             <div class="relative aspect-video">
-              <iframe
-                class="absolute inset-0 h-full w-full"
-                src={`https://www.youtube-nocookie.com/embed/${game.youtube_id}`}
-                title={`${game.title} official announcement trailer`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-              />
+              <iframe class="absolute inset-0 h-full w-full" src={`https://www.youtube-nocookie.com/embed/${game.youtube_id}`} title={`${game.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
             </div>
           </div>
         </section>
       )}
 
-      <section
-        class="space-y-6"
-        data-game-page
-        data-slug={game.slug}
-        data-rec-gpu={game.specs_rec.gpu}
-        data-rec-vram={recVram}
-      >
+      <section class="space-y-6" data-game-page data-slug={game.slug} data-rec-vram={recVram}>
         <h2 class="text-2xl font-bold text-white">Can My PC Run {game.title}? System Requirements</h2>
-        <p class="text-sm text-neutral-400">
-          CPU, RAM, and storage are listed for manual comparison. GPU and VRAM are estimated locally in this tab.
-        </p>
         <div class="grid gap-4 md:grid-cols-2">
           <article class="rounded-2xl border border-neutral-800 bg-neutral-900/70 p-5">
             <h3 class="text-sm font-semibold uppercase tracking-widest text-neutral-400">Minimum</h3>
             <dl class="mt-4 space-y-3 text-sm">
-              <div><dt class="text-neutral-500">CPU</dt><dd class="text-neutral-100">{game.specs_min.cpu}</dd></div>
-              <div><dt class="text-neutral-500">RAM</dt><dd class="text-neutral-100">{game.specs_min.ram}</dd></div>
-              <div><dt class="text-neutral-500">Storage</dt><dd class="text-neutral-100">{game.specs_min.storage}</dd></div>
-              <div><dt class="text-neutral-500">GPU</dt><dd class="text-neutral-100">{game.specs_min.gpu}</dd></div>
+              <div><dt class="text-neutral-500">CPU</dt><dd>{game.specs_min.cpu}</dd></div>
+              <div><dt class="text-neutral-500">RAM</dt><dd>{game.specs_min.ram}</dd></div>
+              <div><dt class="text-neutral-500">Storage</dt><dd>{game.specs_min.storage}</dd></div>
+              <div><dt class="text-neutral-500">GPU</dt><dd>{game.specs_min.gpu}</dd></div>
             </dl>
           </article>
           <article class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
             <h3 class="text-sm font-semibold uppercase tracking-widest text-cyan-300">Recommended</h3>
             <dl class="mt-4 space-y-3 text-sm">
-              <div><dt class="text-neutral-500">CPU</dt><dd class="text-neutral-100">{game.specs_rec.cpu}</dd></div>
-              <div><dt class="text-neutral-500">RAM</dt><dd class="text-neutral-100">{game.specs_rec.ram}</dd></div>
-              <div><dt class="text-neutral-500">Storage</dt><dd class="text-neutral-100">{game.specs_rec.storage}</dd></div>
-              <div>
-                <dt class="text-neutral-500">GPU</dt>
-                <dd class="text-neutral-100">
-                  {game.specs_rec.gpu.replace(/(\d+\s*GB\s*VRAM)/i, '<strong class="text-cyan-300">$1</strong>')}
-                </dd>
-              </div>
+              <div><dt class="text-neutral-500">CPU</dt><dd>{game.specs_rec.cpu}</dd></div>
+              <div><dt class="text-neutral-500">RAM</dt><dd>{game.specs_rec.ram}</dd></div>
+              <div><dt class="text-neutral-500">Storage</dt><dd>{game.specs_rec.storage}</dd></div>
+              <div><dt class="text-neutral-500">GPU</dt><dd class="font-semibold text-cyan-200">{game.specs_rec.gpu}</dd></div>
             </dl>
           </article>
         </div>
-
-        <div class="ad-slot hidden min-h-0" data-ad-format="horizontal" aria-hidden="true"></div>
-
-        <aside id="hw-panel" class="rounded-2xl border border-neutral-700 bg-neutral-900/80 p-5 backdrop-blur">
+        <div class="ad-slot hidden" data-ad-format="horizontal" aria-hidden="true"></div>
+        <aside id="hw-panel" class="rounded-2xl border border-neutral-700 bg-neutral-900/80 p-5">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">AI Hardware Analyzer</p>
-          <p id="hw-status" class="mt-3 text-sm leading-6 text-neutral-200">Scanning local GPU and VRAM tier…</p>
-          <div id="hw-manual" hidden class="mt-4 space-y-2">
+          <p id="hw-status" class="mt-3 text-sm text-neutral-200">Scanning local GPU and VRAM tier…</p>
+          <div id="hw-manual" hidden class="mt-4">
             <label for="gpu-select" class="block text-xs uppercase tracking-widest text-neutral-500">Select your GPU series</label>
-            <select id="gpu-select" class="w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white">
+            <select id="gpu-select" class="mt-2 w-full rounded-lg border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-white">
               <option value="">Choose a series</option>
               <option value="16">RTX 4070 Ti / 16GB class</option>
               <option value="12">RTX 4070 / 12GB class</option>
               <option value="8">RTX 3060 Ti / 8GB class</option>
               <option value="6">GTX 1660 / 6GB class</option>
-              <option value="4">GTX 1650 / 4GB class</option>
               <option value="0">Intel Integrated</option>
             </select>
           </div>
         </aside>
-
-        <aside
-          id="amazon-banner"
-          hidden
-          class="mt-4 translate-y-2 rounded-2xl border border-amber-400/40 bg-neutral-950/90 p-5 opacity-0 shadow-[0_0_24px_rgba(251,191,36,0.12)] transition duration-300"
-        >
-          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-amber-300">16GB VRAM upgrade brief</p>
-          <h3 class="mt-2 text-base font-bold leading-6 text-amber-100">
-            Ready for an upgrade? Explore 16GB cards sized for this recommended tier on Amazon.
-          </h3>
-          <a
-            href="https://www.amazon.com/s?k=RTX+4060+Ti+16GB+graphics+card"
-            rel="nofollow sponsored noopener noreferrer"
-            target="_blank"
-            class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-neutral-950 hover:bg-amber-300"
-          >
-            View 16GB GPU Deals on Amazon →
-          </a>
+        <aside id="amazon-banner" hidden class="mt-4 rounded-2xl border border-amber-400/40 bg-neutral-950/90 p-5">
+          <h3 class="text-base font-bold text-amber-100">Ready for an upgrade? Explore 16GB cards sized for this recommended tier on Amazon.</h3>
+          <a href="https://www.amazon.com/s?k=RTX+4060+Ti+16GB+graphics+card" rel="nofollow sponsored noopener noreferrer" target="_blank" class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-neutral-950">View 16GB GPU Deals on Amazon →</a>
         </aside>
       </section>
     </div>
 
     <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
-      <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5 backdrop-blur">
-        <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">Official stores</p>
-        <div class="mt-3 grid gap-2">
-          {game.affiliate_links?.humble && (
-            <a
-              href={game.affiliate_links.humble}
-              rel="sponsored noopener noreferrer"
-              target="_blank"
-              class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:border-cyan-400/40"
-            >
-              Humble Store ↗
-            </a>
-          )}
-          {game.affiliate_links?.gmg && (
-            <a
-              href={game.affiliate_links.gmg}
-              rel="sponsored noopener noreferrer"
-              target="_blank"
-              class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white hover:border-cyan-400/40"
-            >
-              GreenManGaming ↗
-            </a>
-          )}
-        </div>
-        <p class="mt-3 text-[11px] leading-5 text-neutral-500">Purchases via these links help keep the calendar running.</p>
-      </section>
-
-      <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5 backdrop-blur">
+      {(game.affiliate_links?.humble || game.affiliate_links?.gmg) && (
+        <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">Official stores</p>
+          <div class="mt-3 grid gap-2">
+            {game.affiliate_links?.humble && <a href={game.affiliate_links.humble} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Humble Store ↗</a>}
+            {game.affiliate_links?.gmg && <a href={game.affiliate_links.gmg} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">GreenManGaming ↗</a>}
+          </div>
+        </section>
+      )}
+      <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
         <h2 class="text-lg font-bold text-white">{notifyCopy.title}</h2>
         <p class="mt-2 text-sm text-neutral-400">{notifyCopy.sub}</p>
         <form id="subscribe-form" class="mt-4 space-y-3">
           <label class="sr-only" for="email">Email</label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autocomplete="email"
-            placeholder="you@email.com"
-            class="w-full rounded-lg border border-neutral-700 bg-neutral-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400"
-          />
-          <button type="submit" class="w-full rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950 hover:bg-cyan-300">
-            {notifyCopy.cta}
-          </button>
+          <input id="email" name="email" type="email" required autocomplete="email" placeholder="you@email.com" class="w-full rounded-lg border border-neutral-700 bg-neutral-950/80 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" />
+          <button type="submit" class="w-full rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">{notifyCopy.cta}</button>
         </form>
         <p id="subscribe-status" class="mt-3 hidden text-sm" role="status"></p>
-        <p class="mt-3 text-[12px] leading-5 text-neutral-500">
-          Get an email notice for delays or launch. Unsubscribe anytime in accordance with our Privacy Policy.
-        </p>
+        <p class="mt-3 text-[12px] leading-5 text-neutral-500">Get an email notice for delays or launch. Unsubscribe anytime in accordance with our Privacy Policy.</p>
       </section>
     </aside>
   </div>
@@ -307,32 +180,20 @@ const notifyCopy =
       const recVram = Number(page ? page.getAttribute('data-rec-vram') || '12' : '12');
 
       document.querySelectorAll('.ad-slot').forEach((slot) => {
-        const ready = slot.getAttribute('data-ad-client') || window.adsbygoogle;
-        if (!ready) {
-          slot.classList.add('hidden');
-          slot.style.display = 'none';
-        }
+        if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) slot.style.display = 'none';
       });
 
       if (countdownEl && dateEl) {
         const raw = dateEl.getAttribute('data-date') || '';
-        if (!raw) {
-          countdownEl.textContent = 'Official date not locked.';
-        } else {
+        if (!raw) countdownEl.textContent = 'Official date not locked.';
+        else {
           const target = Date.parse(raw + 'T00:00:00Z');
           const pad = (n) => String(n).padStart(2, '0');
           const tick = () => {
             const diff = target - Date.now();
-            if (diff <= 0) {
-              countdownEl.textContent = 'Already Released';
-              return;
-            }
-            const totalSeconds = Math.floor(diff / 1000);
-            countdownEl.textContent =
-              Math.floor(totalSeconds / 86400) + 'd ' +
-              pad(Math.floor((totalSeconds % 86400) / 3600)) + 'h ' +
-              pad(Math.floor((totalSeconds % 3600) / 60)) + 'm ' +
-              pad(totalSeconds % 60) + 's';
+            if (diff <= 0) { countdownEl.textContent = 'Already Released'; return; }
+            const s = Math.floor(diff / 1000);
+            countdownEl.textContent = Math.floor(s / 86400) + 'd ' + pad(Math.floor((s % 86400) / 3600)) + 'h ' + pad(Math.floor((s % 3600) / 60)) + 'm ' + pad(s % 60) + 's';
           };
           tick();
           setInterval(tick, 1000);
@@ -344,115 +205,60 @@ const notifyCopy =
           event.preventDefault();
           const emailInput = form.querySelector('#email');
           const email = emailInput && 'value' in emailInput ? String(emailInput.value).trim() : '';
-          statusEl.classList.remove('hidden', 'text-emerald-400', 'text-rose-400');
+          statusEl.classList.remove('hidden');
           statusEl.textContent = 'Sending…';
           try {
-            const res = await fetch('/api/subscribe', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email, game_id: slug }),
-            });
+            const res = await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, game_id: slug }) });
             const data = await res.json().catch(() => ({}));
             const passed = res.ok && (data.ok === true || data.success === true);
-            statusEl.classList.add(passed ? 'text-emerald-400' : 'text-rose-400');
-            statusEl.textContent = passed
-              ? 'You are on the list. Watch for delay or launch mail.'
-              : data.error || 'Could not save this subscription.';
+            statusEl.textContent = passed ? 'You are on the list.' : data.error || 'Could not save.';
             if (passed) form.reset();
-          } catch {
-            statusEl.classList.add('text-rose-400');
-            statusEl.textContent = 'Network error. Try again.';
-          }
+          } catch { statusEl.textContent = 'Network error.'; }
         });
       }
 
       const vramMap = [
-        { token: '4090', gb: 24 },
-        { token: '4080', gb: 16 },
-        { token: '4070 ti', gb: 16 },
-        { token: '4070', gb: 12 },
-        { token: '4060 ti', gb: 16 },
-        { token: '4060', gb: 8 },
-        { token: '3090', gb: 24 },
-        { token: '3080', gb: 10 },
-        { token: '3070', gb: 8 },
-        { token: '3060', gb: 12 },
-        { token: '1660', gb: 6 },
-        { token: '1650', gb: 4 },
-        { token: '1060', gb: 6 },
-        { token: '1050', gb: 4 },
-        { token: 'intel', gb: 0 },
-        { token: 'uhd', gb: 0 },
-        { token: 'iris', gb: 0 },
+        { token: '4090', gb: 24 }, { token: '4080', gb: 16 }, { token: '4070', gb: 12 },
+        { token: '4060', gb: 8 }, { token: '3080', gb: 10 }, { token: '3070', gb: 8 },
+        { token: '3060', gb: 12 }, { token: '1660', gb: 6 }, { token: 'intel', gb: 0 },
       ];
-
       const detectGpu = () => {
         try {
           const canvas = document.createElement('canvas');
           const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-          if (!gl) return '';
-          const ext = gl.getExtension('WEBGL_debug_renderer_info');
-          if (!ext) return '';
-          return String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '');
-        } catch {
-          return '';
-        }
+          const ext = gl && gl.getExtension('WEBGL_debug_renderer_info');
+          return ext && gl ? String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) || '') : '';
+        } catch { return ''; }
       };
-
       const estimateVram = (label) => {
         const hay = label.toLowerCase();
         const hit = vramMap.find((row) => hay.includes(row.token));
         return hit ? hit.gb : null;
       };
-
-      const showBanner = (on) => {
-        if (!banner) return;
-        if (on) {
-          banner.hidden = false;
-          requestAnimationFrame(() => {
-            banner.classList.remove('opacity-0', 'translate-y-2');
-            banner.classList.add('opacity-100', 'translate-y-0');
-          });
-        } else {
-          banner.classList.add('opacity-0', 'translate-y-2');
-          banner.hidden = true;
-        }
-      };
-
       const applyResult = (label, gb) => {
         if (!hwPanel || !hwStatus) return;
-        hwPanel.classList.remove('border-emerald-400/40', 'border-amber-400/40', 'border-neutral-700');
         if (gb === null) {
-          hwPanel.classList.add('border-neutral-700');
-          hwStatus.textContent =
-            'Hardware Scan: GPU model could not be confirmed (' + (label || 'generic adapter') + '). Choose your series below.';
+          hwStatus.textContent = 'Hardware Scan: GPU model could not be confirmed (' + (label || 'generic adapter') + '). Choose your series below.';
           if (hwManual) hwManual.hidden = false;
-          showBanner(false);
+          if (banner) banner.hidden = true;
           return;
         }
         if (gb >= recVram) {
           hwPanel.classList.add('border-emerald-400/40');
-          hwStatus.textContent =
-            'Hardware Scan: Your ' + label + ' (~' + gb + 'GB VRAM) meets the recommended ' + recVram + 'GB tier.';
-          showBanner(false);
+          hwStatus.textContent = 'Hardware Scan: Your ' + label + ' (~' + gb + 'GB VRAM) meets the recommended ' + recVram + 'GB tier.';
+          if (banner) banner.hidden = true;
         } else {
           hwPanel.classList.add('border-amber-400/40');
-          hwStatus.textContent =
-            'Hardware Scan: Your ' + label + ' (~' + gb + 'GB VRAM) is below the recommended ' + recVram + 'GB tier. Low frame rates may occur.';
-          showBanner(true);
+          hwStatus.textContent = 'Hardware Scan: Your ' + label + ' (~' + gb + 'GB VRAM) is below the recommended ' + recVram + 'GB tier.';
+          if (banner) banner.hidden = false;
         }
       };
-
       const gpu = detectGpu();
       applyResult(gpu || 'undetected adapter', estimateVram(gpu));
-
-      if (gpuSelect) {
-        gpuSelect.addEventListener('change', () => {
-          const gb = gpuSelect.value === '' ? null : Number(gpuSelect.value);
-          const label = gpuSelect.options[gpuSelect.selectedIndex].text;
-          applyResult(label, Number.isFinite(gb) ? gb : null);
-        });
-      }
+      if (gpuSelect) gpuSelect.addEventListener('change', () => {
+        const gb = gpuSelect.value === '' ? null : Number(gpuSelect.value);
+        applyResult(gpuSelect.options[gpuSelect.selectedIndex].text, Number.isFinite(gb) ? gb : null);
+      });
     })();
   </script>
-</Layout> 
+</Layout>
