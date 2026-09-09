@@ -133,9 +133,18 @@ const notifyCopy =
             </select>
           </div>
         </aside>
-        <aside id="amazon-banner" hidden class="mt-4 rounded-2xl border border-amber-400/40 bg-neutral-950/90 p-5">
-          <h3 class="text-base font-bold text-amber-100">Ready for an upgrade? Explore 16GB cards sized for this recommended tier on Amazon.</h3>
-          <a href="https://www.amazon.com/s?k=RTX+4060+Ti+16GB+graphics+card" rel="nofollow sponsored noopener noreferrer" target="_blank" class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-neutral-950">View 16GB GPU Deals on Amazon →</a>
+                <aside id="amazon-banner" hidden class="mt-4 rounded-2xl border border-amber-400/40 bg-neutral-950/90 p-5">
+          <h3 class="text-base font-bold text-amber-100">
+            Ready for an upgrade? Explore {recVram}GB cards that meet this recommended tier on Amazon.
+          </h3>
+          <a
+            href={`https://www.amazon.com/s?k=${encodeURIComponent(recVram + 'GB graphics card')}`}
+            rel="nofollow sponsored noopener noreferrer"
+            target="_blank"
+            class="mt-4 inline-flex rounded-lg bg-amber-400 px-4 py-2 text-sm font-bold text-neutral-950"
+          >
+            View {recVram}GB GPU Deals on Amazon →
+          </a>
         </aside>
       </section>
     </div>
