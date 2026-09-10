@@ -18,46 +18,56 @@ interface Props {
 
 const { game } = Astro.props;
 
+const currentETStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+const etParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).formatToParts(new Date());
+const currentETISO = `${etParts.find((p) => p.type === 'year')?.value}-${etParts.find((p) => p.type === 'month')?.value}-${etParts.find((p) => p.type === 'day')?.value}`;
+
+const released = Boolean(game.release_date && game.release_date <= currentETISO);
+const pageStatus = released ? 'Released' : game.status;
+
 const TRAILERS: Record<string, string> = {
   'grand-theft-auto-vi': 'QdBZY2fkU-0',
   'eclipse-protocol': '8shA4k_q6s4',
   'night-circuit': 'K_03kFqWfqs',
 };
-
-const youtubeId = (game.youtube_id && game.youtube_id !== TRAILERS['grand-theft-auto-vi'] || game.slug === 'grand-theft-auto-vi')
-  ? (game.youtube_id || TRAILERS[game.slug] || '')
-  : (TRAILERS[game.slug] || game.youtube_id || '');
-
 const trailerId = TRAILERS[game.slug] || game.youtube_id || '';
 
+const humble = game.affiliate_links?.humble || `https://www.humblebundle.com/store/search?search=${encodeURIComponent(game.title)}`;
+const gmg = game.affiliate_links?.gmg || `https://www.greenmangaming.com/search?query=${encodeURIComponent(game.title)}`;
+
 const statusClass =
-  game.status === 'Released' || game.status === 'Locked'
+  pageStatus === 'Released' || pageStatus === 'Locked'
     ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-300'
-    : game.status === 'Delayed'
+    : pageStatus === 'Delayed'
       ? 'border-amber-400/40 bg-amber-400/10 text-amber-300'
       : 'border-neutral-600 bg-neutral-800 text-neutral-300';
 
 const dateLabel = game.release_date
-  ? new Date(`${game.release_date}T00:00:00Z`).toLocaleDateString('en-US', {
+  ? new Date(`${game.release_date}T00:00:00-04:00`).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      timeZone: 'UTC',
+      timeZone: 'America/New_York',
     })
   : 'Date TBA';
 
 const recVramMatch = game.specs_rec.gpu.match(/(\d+)\s*GB/i);
 const recVram = recVramMatch ? recVramMatch[1] : '12';
 
-const notifyCopy =
-  game.status === 'Released'
-    ? { title: 'Never miss an update', sub: 'Get DLC windows and historic low-price alerts for this title.', cta: 'Track Game' }
-    : game.status === 'TBA' || game.status === 'Rumored'
-      ? { title: 'Be the first to know the official date', sub: 'One email when the calendar lock drops. No digest list.', cta: 'Get Lock Notice' }
-      : { title: 'Notify me when this game launches or gets delayed', sub: 'One email when the date moves or the game goes live.', cta: 'Notify Me' };
+const notifyCopy = released
+  ? { title: 'Never miss an update', sub: 'Track DLC drops, historic lows, and major patches after launch.', cta: 'Track Game' }
+  : pageStatus === 'TBA' || pageStatus === 'Rumored'
+    ? { title: 'Be the first to know the official date', sub: 'One email when the calendar lock drops.', cta: 'Get Lock Notice' }
+    : { title: 'Notify me when this game launches or gets delayed', sub: 'One email when the date moves or the game goes live.', cta: 'Notify Me' };
 ---
 
 <Layout title={`${game.title} Release Date & Countdown`} description={`${game.title} release date, trailer, delay history, and PC system requirements.`}>
+  <p class="mb-4 font-mono text-[11px] text-neutral-500">Built against ET {currentETStr} ({currentETISO})</p>
   <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
     <div class="min-w-0 space-y-10 lg:col-span-8">
       <header class="space-y-5 border-b border-cyan-500/20 pb-8">
@@ -65,7 +75,7 @@ const notifyCopy =
         <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">{game.title} Release Date & Countdown</h1>
         <div class="flex flex-wrap items-end gap-4">
           <time class="text-4xl font-black tabular-nums text-cyan-300" datetime={game.release_date || undefined} data-date={game.release_date}>{dateLabel}</time>
-          <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>{game.status}</span>
+          <span class:list={['rounded-full border px-3 py-1 text-sm font-semibold', statusClass]}>{pageStatus}</span>
         </div>
         <p id="countdown" class="font-mono text-sm text-neutral-400">{game.release_date ? 'Calculating countdown…' : 'Official date not locked.'}</p>
         <ul class="flex flex-wrap gap-2">
@@ -101,14 +111,7 @@ const notifyCopy =
           <h2 class="text-2xl font-bold text-white">Official Announcement Trailer</h2>
           <div class="overflow-hidden rounded-2xl border border-cyan-400/30 bg-neutral-950">
             <div class="relative aspect-video">
-              <iframe
-                class="absolute inset-0 h-full w-full"
-                src={`https://www.youtube-nocookie.com/embed/${trailerId}`}
-                title={`${game.title} trailer`}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-              />
+              <iframe class="absolute inset-0 h-full w-full" src={`https://www.youtube-nocookie.com/embed/${trailerId}`} title={`${game.title} trailer`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen />
             </div>
           </div>
         </section>
@@ -160,12 +163,12 @@ const notifyCopy =
     </div>
 
     <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
-      {(game.affiliate_links?.humble || game.affiliate_links?.gmg) && (
+      {released && (
         <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
           <p class="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-400">Official stores</p>
           <div class="mt-3 grid gap-2">
-            {game.affiliate_links?.humble && <a href={game.affiliate_links.humble} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Humble Store ↗</a>}
-            {game.affiliate_links?.gmg && <a href={game.affiliate_links.gmg} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">GreenManGaming ↗</a>}
+            <a href={humble} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">Humble Store ↗</a>
+            <a href={gmg} rel="sponsored noopener noreferrer" target="_blank" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm font-semibold text-white">GreenManGaming ↗</a>
           </div>
         </section>
       )}
@@ -206,7 +209,7 @@ const notifyCopy =
         const raw = dateEl.getAttribute('data-date') || '';
         if (!raw) countdownEl.textContent = 'Official date not locked.';
         else {
-          const target = Date.parse(raw + 'T00:00:00Z');
+          const target = Date.parse(raw + 'T00:00:00-04:00');
           const pad = (n) => String(n).padStart(2, '0');
           const tick = () => {
             const diff = target - Date.now();
@@ -238,17 +241,10 @@ const notifyCopy =
 
       const vramMap = [
         { token: '4090', gb: 24 }, { token: '4080', gb: 16 }, { token: '4070 ti', gb: 16 },
-        { token: '4070', gb: 12 }, { token: '4060 ti', gb: 8 }, { token: '4060', gb: 8 },
-        { token: '3090', gb: 24 }, { token: '3080', gb: 10 }, { token: '3070', gb: 8 },
-        { token: '3060', gb: 12 }, { token: '2080', gb: 8 }, { token: '2070', gb: 8 },
-        { token: '2060', gb: 6 }, { token: '1660', gb: 6 }, { token: '1650', gb: 4 },
-        { token: '1060', gb: 6 }, { token: '1050', gb: 2 }, { token: '7800', gb: 16 },
-        { token: '7700', gb: 12 }, { token: '7600', gb: 8 }, { token: '6800', gb: 16 },
-        { token: '6700', gb: 12 }, { token: '6600', gb: 8 }, { token: 'uhd', gb: 0 },
-        { token: 'iris', gb: 0 }, { token: 'intel', gb: 0 }, { token: 'radeon graphics', gb: 0 },
-        { token: 'mali', gb: 0 }, { token: 'adreno', gb: 0 }
+        { token: '4070', gb: 12 }, { token: '4060', gb: 8 }, { token: '3090', gb: 24 },
+        { token: '3080', gb: 10 }, { token: '3070', gb: 8 }, { token: '3060', gb: 12 },
+        { token: '1660', gb: 6 }, { token: 'uhd', gb: 0 }, { token: 'iris', gb: 0 }, { token: 'intel', gb: 0 }
       ];
-
       const probeWebGL = () => {
         const out = { model: '', maxTexture: 0, maxRenderbuffer: 0 };
         try {
@@ -266,14 +262,12 @@ const notifyCopy =
         } catch (_) {}
         return out;
       };
-
       const vramFromModel = (label) => {
         if (!label) return null;
         const hay = label.toLowerCase();
         const hit = vramMap.find((row) => hay.includes(row.token));
         return hit ? hit.gb : null;
       };
-
       const vramFromLimits = (maxTexture, maxRenderbuffer) => {
         const size = Math.max(maxTexture || 0, maxRenderbuffer || 0);
         if (size >= 32768) return 12;
@@ -283,12 +277,9 @@ const notifyCopy =
         if (size > 0) return 0;
         return null;
       };
-
       const applyResult = (model, gb, limits) => {
         if (!hwPanel || !hwStatus) return;
-        const limitNote = limits.maxTexture
-          ? ' WebGL max texture ' + limits.maxTexture + 'px / renderbuffer ' + limits.maxRenderbuffer + 'px.'
-          : '';
+        const limitNote = limits.maxTexture ? ' WebGL max texture ' + limits.maxTexture + 'px.' : '';
         if (!model && gb === null) {
           hwStatus.textContent = 'Hardware Scan: Browser blocked GPU readout. Choose your series below.';
           if (hwManual) hwManual.hidden = false;
@@ -296,8 +287,8 @@ const notifyCopy =
           return;
         }
         if (hwManual) hwManual.hidden = true;
-        const shown = model || 'Unknown GPU';
         const vram = gb === null ? 0 : gb;
+        const shown = model || 'Unknown GPU';
         if (vram >= recVram) {
           hwPanel.classList.add('border-emerald-400/40');
           hwStatus.textContent = 'Hardware Scan: ' + shown + ' · estimated ~' + vram + 'GB VRAM. Meets the recommended ' + recVram + 'GB tier.' + limitNote;
@@ -308,18 +299,13 @@ const notifyCopy =
           if (banner) banner.hidden = false;
         }
       };
-
       const probe = probeWebGL();
       const modelGb = vramFromModel(probe.model);
-      const limitGb = vramFromLimits(probe.maxTexture, probe.maxRenderbuffer);
-      applyResult(probe.model, modelGb !== null ? modelGb : limitGb, probe);
-
-      if (gpuSelect) {
-        gpuSelect.addEventListener('change', () => {
-          if (!gpuSelect.value) return;
-          applyResult(gpuSelect.options[gpuSelect.selectedIndex].text, Number(gpuSelect.value) || 0, probe);
-        });
-      }
+      applyResult(probe.model, modelGb !== null ? modelGb : vramFromLimits(probe.maxTexture, probe.maxRenderbuffer), probe);
+      if (gpuSelect) gpuSelect.addEventListener('change', () => {
+        if (!gpuSelect.value) return;
+        applyResult(gpuSelect.options[gpuSelect.selectedIndex].text, Number(gpuSelect.value) || 0, probe);
+      });
     })();
   </script>
 </Layout>
