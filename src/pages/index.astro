@@ -4,126 +4,175 @@ export const prerender = true;
 import Layout from '../components/Layout.astro';
 import { loadGamesFromD1 } from '../lib/load-games';
 
+const currentETStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York' });
+const etParts = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'America/New_York',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+}).formatToParts(new Date());
+const currentETISO = `${etParts.find((p) => p.type === 'year')?.value}-${etParts.find((p) => p.type === 'month')?.value}-${etParts.find((p) => p.type === 'day')?.value}`;
+
 const catalog = await loadGamesFromD1();
-const todayKey = new Date().toISOString().slice(0, 10);
-const dated = catalog.filter((game) => game.release_date).sort((a, b) => a.release_date.localeCompare(b.release_date));
-const todays = dated.filter((game) => game.release_date === todayKey);
-const upcoming = dated.filter((game) => game.release_date >= todayKey);
-const hero = todays[0] ?? upcoming[0] ?? catalog.find((game) => game.status !== 'Released') ?? catalog[0];
+const dated = catalog
+  .filter((game) => game.release_date)
+  .sort((a, b) => a.release_date.localeCompare(b.release_date));
+
+const todays = dated.filter((game) => game.release_date === currentETISO);
+const upcoming = dated.filter((game) => game.release_date > currentETISO);
+const hero = todays[0] ?? upcoming[0] ?? catalog[0];
+const heroMode = todays.length > 0 ? 'today' : 'next';
 
 const weekdayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const now = new Date();
-const monday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-const utcDay = monday.getUTCDay();
-monday.setUTCDate(monday.getUTCDate() + (utcDay === 0 ? -6 : 1 - utcDay));
+const etNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+const monday = new Date(etNow);
+const offset = (etNow.getDay() + 6) % 7;
+monday.setDate(etNow.getDate() - offset);
+
 const weekDays = weekdayNames.map((label, index) => {
   const date = new Date(monday);
-  date.setUTCDate(monday.getUTCDate() + index);
-  const key = date.toISOString().slice(0, 10);
+  date.setDate(monday.getDate() + index);
+  const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   const items = catalog.filter((game) => game.release_date === key);
-  return { label, key, items, collision: items.filter((game) => game.status !== 'Rumored' && game.status !== 'TBA').length >= 2 };
+  return {
+    label,
+    key,
+    items,
+    collision: items.filter((game) => game.status !== 'Rumored' && game.status !== 'TBA').length >= 2,
+  };
 });
 
-const changelog = catalog.flatMap((game) => {
-  const last = game.delay_history[game.delay_history.length - 1];
-  if (!last) return [];
-  return [{ title: game.title, slug: game.slug, status: game.status, platforms: game.platforms, note: last.type + (last.reason ? ` · ${last.reason}` : ''), when: last.date }];
-}).slice(0, 6);
+const changelog = catalog
+  .flatMap((game) => {
+    const last = game.delay_history[game.delay_history.length - 1];
+    if (!last) return [];
+    return [{
+      title: game.title,
+      slug: game.slug,
+      status: game.release_date && game.release_date <= currentETISO ? 'Released' : game.status,
+      platforms: game.platforms,
+      note: last.type + (last.reason ? ` · ${last.reason}` : ''),
+      when: last.date,
+    }];
+  })
+  .slice(0, 6);
 
-const buyHref = hero?.affiliate_links?.humble || hero?.affiliate_links?.gmg || (hero ? `/games/${hero.slug}` : '/');
+const buyHref = hero?.affiliate_links?.humble || hero?.affiliate_links?.gmg || (hero ? `https://www.humblebundle.com/store/search?search=${encodeURIComponent(hero.title)}` : '/');
 ---
 
-<Layout title="Video Game Release Calendar" description="Today's video game releases and the 2026 calendar.">
+<Layout title="Video Game Release Calendar" description="Today's video game releases in US Eastern Time and the 2026 calendar.">
   {!hero ? (
     <p class="text-neutral-400">No games in D1 yet.</p>
   ) : (
-  <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
-    <div class="min-w-0 space-y-8 lg:col-span-8">
-      <section class="space-y-2">
-        <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">Video Game Release Calendar</h1>
-        <p id="et-clock" class="font-mono text-xs text-neutral-400">US Eastern Time (ET) loading…</p>
-      </section>
-      <section class="relative overflow-hidden rounded-3xl border border-cyan-400/20" data-hero data-slug={hero.slug} data-date={hero.release_date}>
-        {hero.cover_url && <img src={hero.cover_url} alt="" class="absolute inset-0 h-full w-full object-cover" />}
-        <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/20"></div>
-        <div class="relative aspect-video min-h-[280px] p-6 sm:p-10">
-          <div class="absolute inset-x-6 bottom-6 space-y-3 sm:inset-x-10 sm:bottom-10">
-            <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">{todays.length > 0 ? "Today's Releases" : 'Next Big Release'}</p>
-            <p class="text-3xl font-black text-white sm:text-5xl">{hero.title}</p>
-            <p class="text-sm font-semibold text-cyan-200">{hero.status} · {hero.platforms.join(' / ')}</p>
-            <p id="countdown" class="font-mono text-sm text-neutral-200">{hero.release_date ? 'Calculating countdown…' : 'Official date not locked.'}</p>
-            {hero.status === 'Released' ? (
-              <a href={buyHref} class="inline-flex rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Buy Now ↗</a>
-            ) : (
-              <form id="hero-subscribe" class="flex max-w-xl flex-col gap-3 sm:flex-row">
-                <label class="sr-only" for="hero-email">Email</label>
-                <input id="hero-email" type="email" required placeholder="you@email.com" class="w-full rounded-lg border border-white/20 bg-neutral-950/70 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" />
-                <button type="submit" class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Notify Me</button>
-              </form>
-            )}
-            <p id="hero-status" class="hidden text-sm" role="status"></p>
-            <a href={`/games/${hero.slug}`} class="inline-flex text-sm font-semibold text-white underline">Open entity page →</a>
-          </div>
-        </div>
-      </section>
-      <section class="space-y-4">
-        <h2 class="text-2xl font-bold text-white">This Week's Focus</h2>
-        <ol class="space-y-3">
-          {weekDays.map((day) => (
-            <li class:list={['rounded-xl border p-4', day.collision ? 'border-rose-500/40 bg-red-950/20' : 'border-neutral-800 bg-neutral-900/60']}>
-              <div class="mb-2 flex items-center justify-between">
-                <p class="text-sm font-semibold text-white">{day.label} <span class="ml-2 font-mono text-xs text-neutral-500">{day.key.slice(5)}</span></p>
-                {day.collision && <span class="rounded-full border border-rose-500/40 px-2 py-0.5 text-[11px] font-bold uppercase text-rose-300">Collision</span>}
-              </div>
-              {day.items.length === 0 ? <p class="text-sm text-neutral-500">No tracked mid-size or AAA drops.</p> : (
-                <ul class="space-y-2">{day.items.map((game) => (
-                  <li class="flex items-center justify-between gap-3 text-sm">
-                    <a href={`/games/${game.slug}`} class="font-medium text-cyan-200">{game.title}</a>
-                    <span class="text-xs text-neutral-400">{game.status} · {game.platforms.join(', ')}</span>
-                  </li>
-                ))}</ul>
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-12">
+      <div class="min-w-0 space-y-8 lg:col-span-8">
+        <section class="space-y-2">
+          <h1 class="text-4xl font-black tracking-tight text-white sm:text-5xl">Video Game Release Calendar</h1>
+          <p class="font-mono text-xs text-neutral-400">Build clock · US Eastern Time {currentETStr} ({currentETISO})</p>
+        </section>
+
+        <section class="relative overflow-hidden rounded-3xl border border-cyan-400/20" data-hero data-slug={hero.slug} data-date={hero.release_date}>
+          {hero.cover_url && <img src={hero.cover_url} alt="" class="absolute inset-0 h-full w-full object-cover" />}
+          <div class="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/80 to-neutral-950/20"></div>
+          <div class="relative aspect-video min-h-[280px] p-6 sm:p-10">
+            <div class="absolute inset-x-6 bottom-6 space-y-3 sm:inset-x-10 sm:bottom-10">
+              <p class="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+                {heroMode === 'today' ? "Today's Releases" : 'Next Big Release'}
+              </p>
+              <p class="text-3xl font-black text-white sm:text-5xl">{hero.title}</p>
+              <p class="text-sm font-semibold text-cyan-200">{hero.platforms.join(' / ')} · {hero.release_date || 'TBA'}</p>
+              <p id="countdown" class="font-mono text-sm text-neutral-200">
+                {hero.release_date ? 'Calculating countdown…' : 'Official date not locked.'}
+              </p>
+              {heroMode === 'today' ? (
+                <a href={buyHref} rel="sponsored noopener noreferrer" target="_blank" class="inline-flex rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Buy Now ↗</a>
+              ) : (
+                <form id="hero-subscribe" class="flex max-w-xl flex-col gap-3 sm:flex-row">
+                  <label class="sr-only" for="hero-email">Email</label>
+                  <input id="hero-email" type="email" required placeholder="you@email.com" class="w-full rounded-lg border border-white/20 bg-neutral-950/70 px-4 py-3 text-sm text-white outline-none focus:border-cyan-400" />
+                  <button type="submit" class="rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-neutral-950">Notify Me</button>
+                </form>
               )}
-            </li>
-          ))}
-        </ol>
-      </section>
-      <div class="ad-slot hidden" data-ad-format="horizontal" aria-hidden="true"></div>
+              <p id="hero-status" class="hidden text-sm" role="status"></p>
+              <a href={`/games/${hero.slug}`} class="inline-flex text-sm font-semibold text-white underline">Open entity page →</a>
+            </div>
+          </div>
+        </section>
+
+        {todays.length > 1 && (
+          <ul class="grid gap-3 sm:grid-cols-2">
+            {todays.slice(1).map((game) => (
+              <li class="rounded-xl border border-neutral-800 bg-neutral-900/70 p-4">
+                <a href={`/games/${game.slug}`} class="font-semibold text-cyan-200">{game.title}</a>
+                <p class="mt-1 text-xs text-neutral-400">{game.platforms.join(', ')}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <section class="space-y-4">
+          <h2 class="text-2xl font-bold text-white">This Week's Focus</h2>
+          <ol class="space-y-3">
+            {weekDays.map((day) => (
+              <li class:list={['rounded-xl border p-4', day.collision ? 'border-rose-500/40 bg-red-950/20' : 'border-neutral-800 bg-neutral-900/60']}>
+                <div class="mb-2 flex items-center justify-between">
+                  <p class="text-sm font-semibold text-white">{day.label} <span class="ml-2 font-mono text-xs text-neutral-500">{day.key.slice(5)}</span></p>
+                  {day.collision && <span class="rounded-full border border-rose-500/40 px-2 py-0.5 text-[11px] font-bold uppercase text-rose-300">Collision</span>}
+                </div>
+                {day.items.length === 0 ? (
+                  <p class="text-sm text-neutral-500">No tracked mid-size or AAA drops.</p>
+                ) : (
+                  <ul class="space-y-2">
+                    {day.items.map((game) => (
+                      <li class="flex items-center justify-between gap-3 text-sm">
+                        <a href={`/games/${game.slug}`} class="font-medium text-cyan-200">{game.title}</a>
+                        <span class="text-xs text-neutral-400">{game.platforms.join(', ')}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+        <div class="ad-slot hidden" data-ad-format="horizontal" aria-hidden="true"></div>
+      </div>
+
+      <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
+        <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
+          <h2 class="text-lg font-bold text-white">72h Changelog</h2>
+          <ol class="mt-4 space-y-3 border-l border-dashed border-cyan-400/30 pl-4">
+            {changelog.map((item) => (
+              <li>
+                <p class="font-mono text-[11px] uppercase text-neutral-500">{item.when}</p>
+                <a href={`/games/${item.slug}`} class="text-sm font-semibold text-white">{item.title}</a>
+                <p class="text-xs text-neutral-400">{item.status} · {item.platforms.join(', ')}</p>
+                <p class="text-sm text-neutral-300">{item.note}</p>
+              </li>
+            ))}
+          </ol>
+          <a href="/upcoming-games-2026" class="mt-4 inline-block text-sm font-semibold text-cyan-300">Full 2026 calendar →</a>
+        </section>
+        <div class="ad-slot hidden" data-ad-format="vertical" aria-hidden="true"></div>
+      </aside>
     </div>
-    <aside class="space-y-4 lg:col-span-4 lg:sticky lg:top-6 lg:self-start">
-      <section class="rounded-2xl border border-cyan-400/20 bg-neutral-900/70 p-5">
-        <h2 class="text-lg font-bold text-white">72h Changelog</h2>
-        <ol class="mt-4 space-y-3 border-l border-dashed border-cyan-400/30 pl-4">
-          {changelog.map((item) => (
-            <li>
-              <p class="font-mono text-[11px] uppercase text-neutral-500">{item.when}</p>
-              <a href={`/games/${item.slug}`} class="text-sm font-semibold text-white">{item.title}</a>
-              <p class="text-xs text-neutral-400">{item.status} · {item.platforms.join(', ')}</p>
-              <p class="text-sm text-neutral-300">{item.note}</p>
-            </li>
-          ))}
-        </ol>
-        <a href="/upcoming-games-2026" class="mt-4 inline-block text-sm font-semibold text-cyan-300">Full 2026 calendar →</a>
-      </section>
-      <div class="ad-slot hidden" data-ad-format="vertical" aria-hidden="true"></div>
-    </aside>
-  </div>
   )}
 
   <script is:inline>
     (function () {
-      const clock = document.getElementById('et-clock');
       const countdownEl = document.getElementById('countdown');
       const dateEl = document.querySelector('[data-date]');
       const form = document.getElementById('hero-subscribe');
       const statusEl = document.getElementById('hero-status');
       const slug = dateEl ? dateEl.getAttribute('data-slug') || '' : '';
-      document.querySelectorAll('.ad-slot').forEach((slot) => { if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) slot.style.display = 'none'; });
-      if (clock) clock.textContent = 'Current US Eastern Time: ' + new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(new Date());
+      document.querySelectorAll('.ad-slot').forEach((slot) => {
+        if (!(slot.getAttribute('data-ad-client') || window.adsbygoogle)) slot.style.display = 'none';
+      });
       if (countdownEl && dateEl) {
         const raw = dateEl.getAttribute('data-date') || '';
         if (!raw) countdownEl.textContent = 'Official date not locked.';
         else {
-          const target = Date.parse(raw + 'T00:00:00Z');
+          const target = Date.parse(raw + 'T00:00:00-04:00');
           const pad = (n) => String(n).padStart(2, '0');
           const tick = () => {
             const diff = target - Date.now();
@@ -131,7 +180,8 @@ const buyHref = hero?.affiliate_links?.humble || hero?.affiliate_links?.gmg || (
             const s = Math.floor(diff / 1000);
             countdownEl.textContent = Math.floor(s / 86400) + 'd ' + pad(Math.floor((s % 86400) / 3600)) + 'h ' + pad(Math.floor((s % 3600) / 60)) + 'm ' + pad(s % 60) + 's';
           };
-          tick(); setInterval(tick, 1000);
+          tick();
+          setInterval(tick, 1000);
         }
       }
       if (form && statusEl && slug) {
