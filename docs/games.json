@@ -1,0 +1,76 @@
+[
+  {
+    "title": "Night Circuit",
+    "slug": "night-circuit",
+    "release_date": "2026-06-12",
+    "platforms": ["PC", "PS5"],
+    "status": "Released",
+    "delay_history": [
+      { "date": "2025-11", "type": "First Announcement" },
+      { "date": "2026-06-12", "type": "Released" }
+    ],
+    "specs_min": {
+      "cpu": "Intel Core i5-10400 / AMD Ryzen 5 3600",
+      "ram": "16 GB",
+      "storage": "80 GB SSD",
+      "gpu": "NVIDIA GeForce RTX 3060 (8GB VRAM)"
+    },
+    "specs_rec": {
+      "cpu": "Intel Core i7-12700 / AMD Ryzen 7 5700X",
+      "ram": "16 GB",
+      "storage": "80 GB NVMe SSD",
+      "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
+    },
+    "cover_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/3240220/header.jpg",
+    "youtube_id": "K_03kFqWfqs"
+  },
+  {
+    "title": "Eclipse Protocol",
+    "slug": "eclipse-protocol",
+    "release_date": "",
+    "platforms": ["PC", "PS5", "Xbox Series X"],
+    "status": "TBA",
+    "delay_history": [
+      { "date": "2026-01", "type": "First Announcement" }
+    ],
+    "specs_min": {
+      "cpu": "Intel Core i5-10400 / AMD Ryzen 5 3600",
+      "ram": "16 GB",
+      "storage": "80 GB SSD",
+      "gpu": "NVIDIA GeForce RTX 3060 (8GB VRAM)"
+    },
+    "specs_rec": {
+      "cpu": "Intel Core i7-12700 / AMD Ryzen 7 5700X",
+      "ram": "16 GB",
+      "storage": "80 GB NVMe SSD",
+      "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
+    },
+    "cover_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1888930/header.jpg",
+    "youtube_id": "8shA4k_q6s4"
+  },
+  {
+    "title": "Grand Theft Auto VI",
+    "slug": "grand-theft-auto-vi",
+    "release_date": "2026-11-19",
+    "platforms": ["PS5", "Xbox Series X"],
+    "status": "Locked",
+    "delay_history": [
+      { "date": "2023-12", "type": "First Announcement" },
+      { "date": "2025-05", "type": "Delayed", "reason": "2026 window lock" }
+    ],
+    "specs_min": {
+      "cpu": "Intel Core i5-10400 / AMD Ryzen 5 3600",
+      "ram": "16 GB",
+      "storage": "150 GB SSD",
+      "gpu": "NVIDIA GeForce RTX 3060 (8GB VRAM)"
+    },
+    "specs_rec": {
+      "cpu": "Intel Core i7-12700 / AMD Ryzen 7 5700X",
+      "ram": "16 GB",
+      "storage": "150 GB NVMe SSD",
+      "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
+    },
+    "cover_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/271590/header.jpg",
+    "youtube_id": "QdBZY2fkU-0"
+  }
+]
