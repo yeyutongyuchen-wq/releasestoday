@@ -1,14 +1,67 @@
 [
   {
+    "title": "Eclipse Protocol",
+    "slug": "eclipse-protocol",
+    "release_date": "",
+    "platforms": [
+      "PC",
+      "PS5",
+      "Xbox Series X"
+    ],
+    "status": "TBA",
+    "delay_history": [
+      {
+        "date": "2025-03",
+        "type": "First Announcement"
+      },
+      {
+        "date": "2026-01",
+        "type": "Window TBA",
+        "reason": "No locked calendar date"
+      }
+    ],
+    "specs_min": {
+      "cpu": "Intel Core i5-10400 / AMD Ryzen 5 3600",
+      "ram": "16 GB",
+      "storage": "80 GB SSD",
+      "gpu": "NVIDIA GeForce RTX 3060 (8GB VRAM)"
+    },
+    "specs_rec": {
+      "cpu": "Intel Core i7-12700 / AMD Ryzen 7 5700X",
+      "ram": "16 GB",
+      "storage": "80 GB NVMe SSD",
+      "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
+    },
+    "cover_url": "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
+    "youtube_id": "QdBZY2fkU-0",
+    "affiliate_links": {
+      "humble": "https://www.humblebundle.com/store",
+      "gmg": "https://www.greenmangaming.com/"
+    }
+  },
+  {
     "title": "Night Circuit",
     "slug": "night-circuit",
     "release_date": "2026-09-11",
+    "platforms": [
+      "PC",
+      "PS5"
+    ],
     "status": "Released",
-    "platforms": ["PC", "PS5"],
     "delay_history": [
-      { "date": "2025-11", "type": "First Announcement" },
-      { "date": "2026-06", "type": "Date Locked", "reason": "Gold master" },
-      { "date": "2026-09-11", "type": "Released" }
+      {
+        "date": "2025-11",
+        "type": "First Announcement"
+      },
+      {
+        "date": "2026-06",
+        "type": "Date Locked",
+        "reason": "Gold master"
+      },
+      {
+        "date": "2026-09-11",
+        "type": "Released"
+      }
     ],
     "specs_min": {
       "cpu": "Intel Core i5-9600K / AMD Ryzen 5 3600",
@@ -33,13 +86,30 @@
     "title": "Grand Theft Auto VI",
     "slug": "grand-theft-auto-vi",
     "release_date": "2026-11-20",
+    "platforms": [
+      "PS5",
+      "Xbox Series X"
+    ],
     "status": "Delayed",
-    "platforms": ["PS5", "Xbox Series X"],
     "delay_history": [
-      { "date": "2023-12", "type": "First Announcement" },
-      { "date": "2025-05", "type": "Window Confirmed", "reason": "Fall 2025 target" },
-      { "date": "2026-05", "type": "Delayed", "reason": "Polishing" },
-      { "date": "2026-11-20", "type": "Locked Window" }
+      {
+        "date": "2023-12",
+        "type": "First Announcement"
+      },
+      {
+        "date": "2025-05",
+        "type": "Window Confirmed",
+        "reason": "Fall 2025 target"
+      },
+      {
+        "date": "2026-05",
+        "type": "Delayed",
+        "reason": "Polishing"
+      },
+      {
+        "date": "2026-11-20",
+        "type": "Locked Window"
+      }
     ],
     "specs_min": {
       "cpu": "Intel Core i7-10700K / AMD Ryzen 7 3700X",
@@ -54,35 +124,6 @@
       "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
     },
     "cover_url": "https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=1200&q=80",
-    "youtube_id": "QdBZY2fkU-0",
-    "affiliate_links": {
-      "humble": "https://www.humblebundle.com/store",
-      "gmg": "https://www.greenmangaming.com/"
-    }
-  },
-  {
-    "title": "Eclipse Protocol",
-    "slug": "eclipse-protocol",
-    "release_date": "",
-    "status": "TBA",
-    "platforms": ["PC", "PS5", "Xbox Series X"],
-    "delay_history": [
-      { "date": "2025-03", "type": "First Announcement" },
-      { "date": "2026-01", "type": "Window TBA", "reason": "No locked calendar date" }
-    ],
-    "specs_min": {
-      "cpu": "Intel Core i5-10400 / AMD Ryzen 5 3600",
-      "ram": "16 GB",
-      "storage": "80 GB SSD",
-      "gpu": "NVIDIA GeForce RTX 3060 (8GB VRAM)"
-    },
-    "specs_rec": {
-      "cpu": "Intel Core i7-12700 / AMD Ryzen 7 5700X",
-      "ram": "16 GB",
-      "storage": "80 GB NVMe SSD",
-      "gpu": "NVIDIA GeForce RTX 4070 (12GB VRAM)"
-    },
-    "cover_url": "https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=1200&q=80",
     "youtube_id": "QdBZY2fkU-0",
     "affiliate_links": {
       "humble": "https://www.humblebundle.com/store",
