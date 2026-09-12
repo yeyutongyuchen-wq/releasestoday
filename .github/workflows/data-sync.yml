@@ -24,9 +24,10 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Fetch and clean calendar JSON
+       - name: Fetch and clean calendar JSON
         env:
           CALENDAR_SOURCE_URL: ${{ vars.CALENDAR_SOURCE_URL }}
+          CF_DEPLOY_HOOK: ${{ vars.DEPLOY_HOOK_URL }}
         run: node scripts/fetch-global-games.js
 
       - name: Commit if changed
