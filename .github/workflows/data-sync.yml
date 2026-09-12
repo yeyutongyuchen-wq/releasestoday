@@ -27,7 +27,7 @@ jobs:
       - name: Fetch and clean calendar JSON
         env:
           CALENDAR_SOURCE_URL: ${{ vars.CALENDAR_SOURCE_URL }}
-        run: node scripts/fetch-global-games.cjs
+        run: node scripts/fetch-global-games.js
 
       - name: Commit if changed
         run: |
